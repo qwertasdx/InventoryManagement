@@ -1,0 +1,118 @@
+﻿@model InventoryManagement.ViewModel.ItemBasicSearchViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "商品基本資料";
+}
+<style>
+    .form-select1{
+        display: inline;   
+        padding:.325rem .55rem;
+        width:15%
+    } 
+</style>
+
+<h1>商品基本資料</h1>
+<div>
+<form action="/ItemBasics/SearchRule" method="get">
+    <label>產品狀態:</label>
+     <select name="Status" class="form-select1">
+                    @foreach (var temp in Model.StatusList)
+                    {
+                        if (temp.Value == ViewBag.selectStatus2)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }
+                    }
+                </select> 
+
+     <label>分類:</label>
+                <select name="Spec" class="form-select1">
+                    @foreach (var temp in Model.SpecList)
+                    {
+                        if (temp.Value == ViewBag.selectSpec2)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }
+                    }
+                </select>     
+    <button type="submit">搜尋</button>
+</form>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                商品貨號
+            </th>
+            <th>
+                商品名稱
+            </th>
+            <th>
+                分類
+            </th>
+            <th>
+                單位
+            </th>
+            <th>
+                狀態
+            </th>
+            <th>
+                員工
+            </th>
+            <th>
+                上架時間
+            </th>
+            <th>
+                下架時間
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.News)
+        {
+        <tr>
+            <td>
+                @item.ItemCode
+            </td>
+            <td>
+                @item.ItemName
+            </td>
+            <td>
+                @item.SpecName
+            </td>
+            <td>
+                @item.Unit
+            </td>
+            <td>
+                @item.StatusName
+            </td>
+            <td>
+                @item.EmployeeName
+            </td>
+             <td>
+                @item.StartTime.ToString("yyyy-MM-dd")
+            </td>
+             <td>
+                @item.EndTime.ToString("yyyy-MM-dd")
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.ItemCode">修改</a> |
+                <a asp-action="Delete" asp-route-id="@item.ItemCode">刪除</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+
+
+

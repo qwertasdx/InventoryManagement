@@ -1,0 +1,93 @@
+﻿@model InventoryManagement.ViewModel.ItemBasicsEditViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "商品修改";
+}
+
+<h1>商品資料修改</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="News.ItemCode" />
+            <div class="form-group">
+                <label asp-for="News.ItemName" class="control-label">商品名稱</label>
+                <input asp-for="News.ItemName" class="form-control" />
+                <span asp-validation-for="News.ItemName" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <label asp-for="News.Spec" class="control-label">分類</label>
+                <select name="News.Spec" class="form-select">
+                    @foreach (var temp in Model.SpecList)
+                    {
+                        if (temp.Value == ViewBag.selectSpec)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }
+                    }
+                </select>     
+                <span asp-validation-for="News.Spec" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <label asp-for="News.Unit" class="control-label">單位</label>
+                <select name="News.Unit" class="form-select">
+                    @foreach (var temp in Model.UnitList)
+                    {
+                        if (temp.Value == ViewBag.selectUnit)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }else{
+                            <option value="@temp.Value">@temp.Text</option>
+                        }                   
+                    }
+                </select>
+                <span asp-validation-for="News.Unit" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <label asp-for="News.Status" class="control-label">狀態</label>
+                <select name="News.Status" class="form-select">
+                    @foreach (var temp in Model.StatusList)
+                    {
+                        if (temp.Value == ViewBag.selectStatus)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="News.Status" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <label asp-for="News.StartTime" class="control-label">上架時間</label>
+                <input asp-for="News.StartTime" class="form-control" />
+                <span asp-validation-for="News.StartTime" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <label asp-for="News.EndTime" class="control-label">下架時間</label>
+                <input asp-for="News.EndTime" class="form-control" />
+                <span asp-validation-for="News.EndTime" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,53 @@
+﻿@model IEnumerable<InventoryManagement.Models.User>
+@{
+    Layout = "_Layout";
+}
+
+<style>
+    .modal-dialog{
+        pointer-events:auto
+    }
+</style>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                員工編號
+            </th>
+            <th>
+                員工姓名
+            </th>
+            <th>
+                帳號
+            </th>
+            <th>
+                密碼
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EmployeeId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EmployeeName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Account)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Password)
+                </td>
+                <td>
+                    <a  asp-action="Delete" asp-route-id="@item.EmployeeId">刪除</a>
+                </td>
+            </tr>      
+        }
+    </tbody>
+</table>
+
+
