@@ -12,21 +12,34 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using System.Drawing;
+using Microsoft.AspNetCore.Http.HttpResults;
+
 
 namespace InventoryManagement.Controllers
-{
-    [Authorize]
+{  
+    [Authorize] 
+    public class GlobalSettings
+    {
+        public string employeeName { get; set; }
+        public string employeeId { get; set; }
+    }
+
     public class ItemBasicsController : Controller
     {
         private readonly WebContext _context;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly GlobalSettings _globalSettings;
         public string name = "";
-        public ItemBasicsController(WebContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        private object Img;
+
+        public ItemBasicsController(WebContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor, GlobalSettings globalSettings)
         {
             _context = context;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
+            _globalSettings = globalSettings;
         }
 
         // 取得登入的使用者資訊
@@ -36,11 +49,13 @@ namespace InventoryManagement.Controllers
 
             // 此段需查看驗證，所設的type與value值(在UserController)
             var employeeName = Claim.Where(x => x.Type == "FullName").First().Value;
+            var employeeId = Claim.Where(x => x.Type == "EmployeeId").First().Value;
             TempData["EmployeeName"] = employeeName;
-            name = employeeName;
-
+            _globalSettings.employeeName = employeeName;
+            _globalSettings.employeeId = employeeId;
         }
 
+      
         // GET: ItemBasics
         public async Task<IActionResult> Index()
         {
@@ -48,8 +63,8 @@ namespace InventoryManagement.Controllers
             var now = DateTime.Now;
             var ItemBasicSearchViewModel = new ItemBasicSearchViewModel();
             ItemBasicSearchViewModel.News = await(from a in _context.ItemBasic
-                               join b in _context.Employee on a.SystemUser equals b.EmployeeId
-                               where a.StartTime <= now && a.EndTime >= now
+                               join b in _context.User on a.SystemUser equals b.EmployeeId
+                               where a.Status != "20"
                                orderby a.SystemTime descending
                                select new ItemBasics 
                                { 
@@ -57,10 +72,8 @@ namespace InventoryManagement.Controllers
                                     ItemName = a.ItemName,
                                     Spec = a.Spec,
                                     Status = a.Status,
-                                    Unit = a.Unit,
+                                    Img = a.Img,
                                     EmployeeName = b.EmployeeName,
-                                    StartTime = a.StartTime,
-                                    EndTime = a.EndTime,
                                }).ToListAsync();
 
             ItemBasicSearchViewModel.SpecList.Insert(0, new SelectListItem("全部", "0"));
@@ -88,10 +101,7 @@ namespace InventoryManagement.Controllers
                              ItemName = a.ItemName,
                              Spec = a.Spec,
                              Status = a.Status,
-                             Unit = a.Unit,
                              EmployeeName = b.EmployeeName,
-                             StartTime = a.StartTime,
-                             EndTime = a.EndTime
                          };
 
             ItemBasicSearchViewModel.SpecList.Insert(0, new SelectListItem("全部", "0"));
@@ -115,8 +125,19 @@ namespace InventoryManagement.Controllers
             return View("Index", ItemBasicSearchViewModel);          
         }
 
+        [HttpGet]
+        public string GetImg(string id)
+        {
+            var result = (from a in _context.ItemBasic
+                          where a.ItemCode == id
+                          select  a.Img).SingleOrDefault();
+              
+            ViewBag.img = GetImageBase64(result);
+            return ViewBag.img;
+        }
+
         // 下架時間到，要將狀態改為停用
-        public async Task<IActionResult>  updateStatus()
+        /*public async Task<IActionResult>  updateStatus()
         {
             List<ItemBasicsEditViewModel> updateList = new List<ItemBasicsEditViewModel>();
             var result = from a in _context.ItemBasic
@@ -134,12 +155,13 @@ namespace InventoryManagement.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
-        }
+        }*/
 
         // GET: ItemBasics/Create
         public IActionResult Create()
         {
-            var ItemBasicViewModel = new ItemBasicCreateViewModel();          
+            TempData["EmployeeName"] = _globalSettings.employeeName;
+            var ItemBasicViewModel = new ItemBasicCreateViewModel();
             return View(ItemBasicViewModel);
         }
 
@@ -148,28 +170,27 @@ namespace InventoryManagement.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateBasics news)
+        public async Task<IActionResult> Create(CreateBasics news, IFormFile myimg)
         {
             string itemCode = generateItemCode(news);
-            if (ModelState.IsValid)
-            {            
-                ItemBasic insert = new ItemBasic()
-                {
-                    ItemCode = itemCode,
-                    ItemName = news.ItemName,
-                    Spec = news.Spec,
-                    Unit = news.Unit,
-                    Status = news.Status,
-                    StartTime = news.StartTime,
-                    EndTime = news.EndTime,
-                    SystemUser = "A35455"
-                };
-
-                _context.Add(insert);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+        
+            ItemBasic insert = new ItemBasic()
+            {
+                ItemCode = itemCode,
+                ItemName = news.ItemName.Trim(),
+                Spec = news.Spec,
+                Status = news.Status,
+                SystemUser = _globalSettings.employeeId.Trim()
+            };
+            using (var ms = new MemoryStream())
+            {
+                myimg.CopyTo(ms);
+                insert.Img = ms.ToArray();
             }
-            return View(news);
+
+            _context.Add(insert);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));  
         }
 
         //新建商品時，產生商品貨號
@@ -198,9 +219,11 @@ namespace InventoryManagement.Controllers
             return itemCode;    
         }
 
+
         // GET: ItemBasics/Edit/5
         public async Task<IActionResult> Edit(string id)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             if (id == null)
             {
                 return NotFound();
@@ -213,14 +236,11 @@ namespace InventoryManagement.Controllers
                                             {
                                                 ItemCode = a.ItemCode,
                                                 ItemName = a.ItemName,
+                                                Img = a.Img,
                                                 Spec = a.Spec,
-                                                Unit = a.Unit,
-                                                Status = a.Status,
-                                                StartTime = a.StartTime,
-                                                EndTime = a.EndTime
+                                                Status = a.Status
                                             }).SingleOrDefault();
 
-            ViewBag.selectUnit = ItemBasicsEditViewModel.News.Unit.Trim();
             ViewBag.selectSpec = ItemBasicsEditViewModel.News.Spec.Trim();
             ViewBag.selectStatus = ItemBasicsEditViewModel.News.Status.Trim();
 
@@ -234,32 +254,52 @@ namespace InventoryManagement.Controllers
         // POST: ItemBasics/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, ItemBasicsEdit news)
+        public async Task<IActionResult> Edit(string id, ItemBasicsEdit news, IFormFile myimg)
         {
             if (id.Trim() != news.ItemCode.Trim())
             {
                 return NotFound();
             }
+          
+            var update = _context.ItemBasic.Find(id);
 
-            if (ModelState.IsValid)
+            if (update != null)
             {
-                var update = _context.ItemBasic.Find(id);
+                update.ItemName = news.ItemName;
+                update.Spec = news.Spec;
+                update.Status = news.Status;
+                update.SystemUser = _globalSettings.employeeId.Trim();
 
-                if (update != null)
-                { 
-                    update.ItemName = news.ItemName;
-                    update.Spec = news.Spec;
-                    update.Unit = news.Unit;
-                    update.Status = news.Status;
-                    update.StartTime = news.StartTime;
-                    update.EndTime = news.EndTime;
-                    update.SystemUser = "A35455";
-
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
+                using (var ms = new MemoryStream())
+                {
+                    //有更新圖片
+                    if (myimg != null)
+                    {
+                        myimg.CopyTo(ms);
+                        update.Img = ms.ToArray();
+                    }     
                 }
+
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
+            
             return View(news);
+        }
+
+        //將圖片轉換
+        public static string GetImageBase64(byte[] imageBytes)
+        {
+            if (imageBytes == null)
+            {
+                return "";
+            }
+
+            MemoryStream ms = new MemoryStream();
+            Image image = Image.FromStream(new MemoryStream(imageBytes));
+            image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            image.Dispose();
+            return Convert.ToBase64String(ms.ToArray());
         }
 
         // GET: ItemBasics/Delete/5

@@ -4,18 +4,22 @@
     Layout = "_Layout";
     ViewData["Title"] = "商品修改";
 }
-
+<style>
+    #message {
+        color: red;
+    }
+</style>
 <h1>商品資料修改</h1>
 
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="News.ItemCode" />
             <div class="form-group">
                 <label asp-for="News.ItemName" class="control-label">商品名稱</label>
-                <input asp-for="News.ItemName" class="form-control" />
+                <input asp-for="News.ItemName" class="form-control" required >
                 <span asp-validation-for="News.ItemName" class="text-danger"></span>
             </div><br>
             <div class="form-group">
@@ -34,22 +38,7 @@
                     }
                 </select>     
                 <span asp-validation-for="News.Spec" class="text-danger"></span>
-            </div><br>
-            <div class="form-group">
-                <label asp-for="News.Unit" class="control-label">單位</label>
-                <select name="News.Unit" class="form-select">
-                    @foreach (var temp in Model.UnitList)
-                    {
-                        if (temp.Value == ViewBag.selectUnit)
-                        {
-                            <option value="@temp.Value" selected>@temp.Text</option>
-                        }else{
-                            <option value="@temp.Value">@temp.Text</option>
-                        }                   
-                    }
-                </select>
-                <span asp-validation-for="News.Unit" class="text-danger"></span>
-            </div><br>
+            </div><br>           
             <div class="form-group">
                 <label asp-for="News.Status" class="control-label">狀態</label>
                 <select name="News.Status" class="form-select">
@@ -67,16 +56,13 @@
                 </select>
                 <span asp-validation-for="News.Status" class="text-danger"></span>
             </div><br>
-            <div class="form-group">
-                <label asp-for="News.StartTime" class="control-label">上架時間</label>
-                <input asp-for="News.StartTime" class="form-control" />
-                <span asp-validation-for="News.StartTime" class="text-danger"></span>
+            
+            <div class="form-group" >
+                <label asp-for="News.NewImg" class="control-label">上傳圖片</label>
+                <input asp-for="News.NewImg" accept="image/*" type="file" name="myimg" id="myimg" multiple class="form-control">
+                <p id="message"></p>
             </div><br>
-            <div class="form-group">
-                <label asp-for="News.EndTime" class="control-label">下架時間</label>
-                <input asp-for="News.EndTime" class="form-control" />
-                <span asp-validation-for="News.EndTime" class="text-danger"></span>
-            </div><br>
+            <input type="hidden" asp-for="News.Img" >
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
@@ -91,3 +77,24 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+
+<script>
+    const fileInput = document.getElementById('myimg');
+    const message = document.getElementById('message');
+
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+
+        if (file) {
+            const fileType = file.type;
+
+            // 檢查文件類型是否為圖片
+            if (!fileType.startsWith('image/')) {
+                message.textContent = '請上傳有效的圖片檔案！';
+                fileInput.value = ''; // 清空選擇的文件
+            } else{
+                message.textContent = "";
+            }
+        }
+    });
+</script>

@@ -52,7 +52,8 @@ namespace InventoryManagement.Controllers
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, user.Account),
-                        new Claim("FullName", user.EmployeeName)
+                        new Claim("FullName", user.EmployeeName),
+                        new Claim("EmployeeId", user.EmployeeId),
                     };
 
                     // 將角色塞入Claim

@@ -11,19 +11,14 @@ namespace InventoryManagement.Dto
 
         public string Spec { get; set; } = null!;
 
-        public string Unit { get; set; } = null!;
-
         public string Status { get; set; } = null!;
-
-        public DateTime StartTime { get; set; }
-
-        public DateTime EndTime { get; set; }
 
         public string EmployeeName { get; set; } = null!;
 
         public string StatusName { get; set; } = null!;
-        public string SpecName { get; set; } = null!;
-        
 
+        public string SpecName { get; set; } = null!;
+
+        public byte[] Img { get; set; }
     }
 }

@@ -59,19 +59,10 @@
                 分類
             </th>
             <th>
-                單位
-            </th>
-            <th>
                 狀態
             </th>
             <th>
                 員工
-            </th>
-            <th>
-                上架時間
-            </th>
-            <th>
-                下架時間
             </th>
             <th></th>
         </tr>
@@ -90,29 +81,59 @@
                 @item.SpecName
             </td>
             <td>
-                @item.Unit
-            </td>
-            <td>
                 @item.StatusName
             </td>
             <td>
                 @item.EmployeeName
             </td>
-             <td>
-                @item.StartTime.ToString("yyyy-MM-dd")
-            </td>
-             <td>
-                @item.EndTime.ToString("yyyy-MM-dd")
-            </td>
             <td>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop" id="@item.ItemCode" onclick="showImage(@item.ItemCode)">
+                    圖片
+                </button>
                 <a asp-action="Edit" asp-route-id="@item.ItemCode">修改</a> |
                 <a asp-action="Delete" asp-route-id="@item.ItemCode">刪除</a>
             </td>
-        </tr>
-}
+        </tr>      
+        }
     </tbody>
 </table>
 
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">商品圖片</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            
+                <img id="modalImage" src="" width="20%" height="20%"  />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>        
+            </div>
+        </div>
+    </div>
+</div>
 
 
-
+<script>
+    function showImage(ItemCode) {
+        // 假設你有一個 API 可以根據 itemCode 獲取圖片的 Base64 編碼
+        fetch(`/ItemBasics/GetImg/${ItemCode.id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text(); // 直接返回文本，因為是 Base64 字串
+            })
+            .then(base64Image => {
+                document.getElementById('modalImage').src = `data:image/png;base64,${base64Image}`;
+            })
+            .catch(error => {
+                console.error('Error fetching image:', error);
+                document.getElementById('modalImage').src = ''; // 清空圖片
+            });
+    }
+</script>

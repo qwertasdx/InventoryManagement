@@ -17,6 +17,8 @@ public partial class WebContext : DbContext
 
     public virtual DbSet<ItemBasic> ItemBasic { get; set; }
 
+    public virtual DbSet<ItemStock> ItemStock { get; set; }
+
     public virtual DbSet<News> News { get; set; }
 
     public virtual DbSet<NewsFiles> NewsFiles { get; set; }
@@ -51,14 +53,12 @@ public partial class WebContext : DbContext
             entity.Property(e => e.ItemCode)
                 .HasMaxLength(8)
                 .IsFixedLength();
-            entity.Property(e => e.EndTime).HasColumnType("datetime");
             entity.Property(e => e.ItemName)
                 .HasMaxLength(20)
                 .IsFixedLength();
             entity.Property(e => e.Spec)
                 .HasMaxLength(10)
                 .IsFixedLength();
-            entity.Property(e => e.StartTime).HasColumnType("datetime");
             entity.Property(e => e.Status)
                 .HasMaxLength(2)
                 .IsUnicode(false)
@@ -69,8 +69,25 @@ public partial class WebContext : DbContext
             entity.Property(e => e.SystemUser)
                 .HasMaxLength(10)
                 .IsFixedLength();
+        });
+
+        modelBuilder.Entity<ItemStock>(entity =>
+        {
+            entity.HasKey(e => e.ItemCode);
+
+            entity.Property(e => e.ItemCode)
+                .HasMaxLength(8)
+                .IsFixedLength();
+            entity.Property(e => e.Status)
+                .HasMaxLength(2)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.SystemTime).HasColumnType("datetime");
+            entity.Property(e => e.SystemUser)
+                .HasMaxLength(10)
+                .IsFixedLength();
             entity.Property(e => e.Unit)
-                .HasMaxLength(5)
+                .HasMaxLength(2)
                 .IsUnicode(false)
                 .IsFixedLength();
         });

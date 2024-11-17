@@ -13,6 +13,10 @@
         padding:.375rem .75rem;
         width:100%
     }
+
+    #message {
+        color: red; 
+    }
 </style>
 
 <h1>商品資料建立</h1>
@@ -20,7 +24,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             @*<div class="form-group">
                 <label asp-for="News.ItemCode" class="control-label">商品貨號</label>
@@ -40,13 +44,6 @@
                 <span asp-validation-for="News.Spec" class="text-danger"></span>
             </div><br>
             <div class="form-group">
-                <label asp-for="News.Unit" class="control-label">單位</label>
-                <select asp-for="News.Unit" asp-items="Model.UnitList" class="form-select">
-                    @*<option value="">==請選擇單位==</option>*@
-                </select>
-                <span asp-validation-for="News.Unit" class="text-danger"></span>
-            </div><br>
-            <div class="form-group">
                 <label asp-for="News.Status" class="control-label">狀態</label>
                 <select asp-for="News.Status" asp-items="Model.StatusList" class="form-select">
                     @*<option value="">==請選擇狀態==</option>*@
@@ -54,14 +51,10 @@
                 <span asp-validation-for="News.Status" class="text-danger"></span>
             </div><br>
             <div class="form-group">
-                <label asp-for="News.StartTime" class="control-label">上架時間</label>
-                <input asp-for="News.StartTime" class="form-control" />
-                <span asp-validation-for="News.StartTime" class="text-danger"></span>
-            </div><br>
-            <div class="form-group">
-                <label asp-for="News.EndTime" class="control-label">下架時間</label>
-                <input asp-for="News.EndTime" class="form-control" />
-                <span asp-validation-for="News.EndTime" class="text-danger"></span>
+                <label asp-for="News.Img" class="control-label">上傳圖片</label>
+                <input asp-for="News.Img" accept="image/*" type="file" name="myimg" id="myimg" multiple class="form-control">
+                <span asp-validation-for="News.Img" class="text-danger"></span>
+                <p id="message"></p>
             </div><br>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
@@ -77,3 +70,24 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+
+<script>
+    const fileInput = document.getElementById('myimg');
+    const message = document.getElementById('message');
+
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+
+        if (file) {
+            const fileType = file.type;
+
+            // 檢查文件類型是否為圖片
+            if (!fileType.startsWith('image/')) {
+                message.textContent = '請上傳有效的圖片檔案！';
+                fileInput.value = ''; // 清空選擇的文件
+            } else{
+                message.textContent = "";
+            }
+        }
+    });
+</script>

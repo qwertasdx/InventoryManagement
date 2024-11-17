@@ -3,15 +3,15 @@ using System.Collections.Generic;
 
 namespace InventoryManagement.Models;
 
-public partial class ItemBasic
+public partial class ItemStock
 {
     public string ItemCode { get; set; } = null!;
 
-    public string ItemName { get; set; } = null!;
+    public string Unit { get; set; } = null!;
 
-    public string Spec { get; set; } = null!;
+    public int SafeQty { get; set; }
 
-    public byte[] Img { get; set; } = null!;
+    public int TotalQty { get; set; }
 
     public string Status { get; set; } = null!;
 

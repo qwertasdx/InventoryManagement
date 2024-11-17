@@ -1,3 +1,4 @@
+using InventoryManagement.Controllers;
 using InventoryManagement.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -6,13 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<GlobalSettings>();
+
 builder.Services.AddAutoMapper(typeof(Program));
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 // 取得登入使用者資訊
 builder.Services.AddHttpContextAccessor();
-
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(option =>
 {
@@ -52,5 +54,5 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=User}/{action=Login}/{id?}");
-
+    //pattern: "{controller=ItemBasics}/{action=Index}/{id?}");
 app.Run();
