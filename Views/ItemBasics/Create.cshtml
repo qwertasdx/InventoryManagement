@@ -44,6 +44,13 @@
                 <span asp-validation-for="News.Spec" class="text-danger"></span>
             </div><br>
             <div class="form-group">
+                <label asp-for="News.Unit" class="control-label">單位</label>
+                <select asp-for="News.Unit" asp-items="Model.UnitList" class="form-select">
+                    @*<option value="">==請選擇單位==</option>*@
+                </select>
+                <span asp-validation-for="News.Unit" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
                 <label asp-for="News.Status" class="control-label">狀態</label>
                 <select asp-for="News.Status" asp-items="Model.StatusList" class="form-select">
                     @*<option value="">==請選擇狀態==</option>*@
@@ -56,6 +63,11 @@
                 <span asp-validation-for="News.Img" class="text-danger"></span>
                 <p id="message"></p>
             </div><br>
+            <div class="form-group">
+                <img id="preview" style="max-height:200px;" />
+            </div><br>
+
+            @Html.ValidationMessageFor(model => model.News, "", new { @class = "text-danger" })
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -82,11 +94,19 @@
             const fileType = file.type;
 
             // 檢查文件類型是否為圖片
-            if (!fileType.startsWith('image/')) {
+            if (!fileType.startsWith('image/')) 
+            {
                 message.textContent = '請上傳有效的圖片檔案！';
                 fileInput.value = ''; // 清空選擇的文件
-            } else{
+                //$('#preview').attr('src', ""); 
+            } 
+            else
+            {
                 message.textContent = "";
+
+                // 使用 createObjectURL 產生圖片url
+                const objectURL = URL.createObjectURL(file);
+                $('#preview').attr('src', objectURL);
             }
         }
     });

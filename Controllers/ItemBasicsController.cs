@@ -8,12 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Models;
 using InventoryManagement.Dto;
 using InventoryManagement.ViewModel;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using System.Drawing;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 
 namespace InventoryManagement.Controllers
@@ -51,30 +48,60 @@ namespace InventoryManagement.Controllers
             var employeeName = Claim.Where(x => x.Type == "FullName").First().Value;
             var employeeId = Claim.Where(x => x.Type == "EmployeeId").First().Value;
             TempData["EmployeeName"] = employeeName;
-            _globalSettings.employeeName = employeeName;
-            _globalSettings.employeeId = employeeId;
+            _globalSettings.employeeName = employeeName.Trim();
+            _globalSettings.employeeId = employeeId.Trim();
         }
 
       
         // GET: ItemBasics
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string Status, string Spec , int page = 1, int pageSize = 10)
         {
             getUsersInfo();
             var now = DateTime.Now;
             var ItemBasicSearchViewModel = new ItemBasicSearchViewModel();
-            ItemBasicSearchViewModel.News = await(from a in _context.ItemBasic
-                               join b in _context.User on a.SystemUser equals b.EmployeeId
-                               where a.Status != "20"
-                               orderby a.SystemTime descending
+            var query = from a in _context.ItemBasic
+                               join b in _context.User on a.SystemUser equals b.EmployeeId 
+                               join c in _context.ItemStock on a.ItemCode equals c.ItemCode    
+                               group new { a,b,c } by new
+                               {
+                                   a.ItemCode,
+                                   a.ItemName,
+                                   a.Spec,
+                                   a.Status,
+                                   a.Img,
+                                   a.SystemTime,
+                                   b.EmployeeName,
+                                   c.TotalQty
+                               } into g
                                select new ItemBasics 
                                { 
-                                    ItemCode = a.ItemCode,
-                                    ItemName = a.ItemName,
-                                    Spec = a.Spec,
-                                    Status = a.Status,
-                                    Img = a.Img,
-                                    EmployeeName = b.EmployeeName,
-                               }).ToListAsync();
+                                   ItemCode = g.Key.ItemCode,
+                                   ItemName = g.Key.ItemName,
+                                   Spec = g.Key.Spec,
+                                   Status = g.Key.Status,
+                                   Img = g.Key.Img,
+                                   SystemTime = g.Key.SystemTime,
+                                   EmployeeName = g.Key.EmployeeName,
+                                   TotalQty  = g.Key.TotalQty
+                               };
+
+            if (Status == null)
+            {
+                query = query.Where(x => x.Status == "10");
+            }
+            else
+            {
+                query = query.Where(x => x.Status == Status);
+            }
+  
+            // 根據 Spec 過濾
+            if (!string.IsNullOrEmpty(Spec) && Spec != "0")
+            {
+                query = query.Where(x => x.Spec == Spec);
+            }
+
+            // 執行查詢並取得結果
+            ItemBasicSearchViewModel.News = await query.OrderByDescending(a => a.SystemTime).ToListAsync();
 
             ItemBasicSearchViewModel.SpecList.Insert(0, new SelectListItem("全部", "0"));
 
@@ -85,46 +112,27 @@ namespace InventoryManagement.Controllers
                 this.SpecName(item);
             }
 
+            Pagination(page, pageSize, ItemBasicSearchViewModel);
+
+            ViewBag.selectSpec2 = Spec;
+            ViewBag.selectStatus2 = Status;
             return View(ItemBasicSearchViewModel);
         }
 
-        public async Task<IActionResult> SearchRule(string Status, string Spec)
+        //設定分頁，10筆資料為一頁
+        public void Pagination(int page, int pageSize, ItemBasicSearchViewModel ItemBasicSearchViewModel)
         {
-            var now = DateTime.Now;
-            var ItemBasicSearchViewModel = new ItemBasicSearchViewModel();
-            var result = from a in _context.ItemBasic
-                         join b in _context.Employee on a.SystemUser equals b.EmployeeId
-                         where a.Status == Status
-                         select new ItemBasics
-                         {
-                             ItemCode = a.ItemCode,
-                             ItemName = a.ItemName,
-                             Spec = a.Spec,
-                             Status = a.Status,
-                             EmployeeName = b.EmployeeName,
-                         };
+            var items = ItemBasicSearchViewModel.News; // 獲取所有項目
+            var totalItems = items.Count();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            ItemBasicSearchViewModel.SpecList.Insert(0, new SelectListItem("全部", "0"));
-            ViewBag.selectSpec2 = Spec;
-            ViewBag.selectStatus2 = Status;
+            var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-            if (Spec != "0")
-            {
-                result = result.Where(x => x.Spec == Spec);
-            }
-
-            ItemBasicSearchViewModel.News = result.ToList();
-
-            // 組資料
-            foreach (var item in ItemBasicSearchViewModel.News)
-            {
-                this.StatusName(item);
-                this.SpecName(item);
-            }
-
-            return View("Index", ItemBasicSearchViewModel);          
+            ItemBasicSearchViewModel.News = pagedItems;
+            ItemBasicSearchViewModel.CurrentPage = page;
+            ItemBasicSearchViewModel.TotalPages = totalPages;        
         }
-
+     
         [HttpGet]
         public string GetImg(string id)
         {
@@ -136,27 +144,6 @@ namespace InventoryManagement.Controllers
             return ViewBag.img;
         }
 
-        // 下架時間到，要將狀態改為停用
-        /*public async Task<IActionResult>  updateStatus()
-        {
-            List<ItemBasicsEditViewModel> updateList = new List<ItemBasicsEditViewModel>();
-            var result = from a in _context.ItemBasic
-                         where a.EndTime <= DateTime.Now
-                         select a;
-
-            result = result.Where(x => x.Status != "停用");
-
-            if (result != null)
-            {
-                foreach (var temp in result)
-                {
-                    temp.Status = "20";
-                }
-                await _context.SaveChangesAsync();
-            }
-            return RedirectToAction(nameof(Index));
-        }*/
-
         // GET: ItemBasics/Create
         public IActionResult Create()
         {
@@ -166,35 +153,58 @@ namespace InventoryManagement.Controllers
         }
 
         // POST: ItemBasics/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateBasics news, IFormFile myimg)
+        public async Task<IActionResult> Create(ItemBasicCreateViewModel ItemBasicCreateViewModel, IFormFile myimg)
         {
-            string itemCode = generateItemCode(news);
-        
-            ItemBasic insert = new ItemBasic()
+            string itemCode = generateItemCode(ItemBasicCreateViewModel.News);
+            using (var transaction = _context.Database.BeginTransaction())
             {
-                ItemCode = itemCode,
-                ItemName = news.ItemName.Trim(),
-                Spec = news.Spec,
-                Status = news.Status,
-                SystemUser = _globalSettings.employeeId.Trim()
-            };
-            using (var ms = new MemoryStream())
-            {
-                myimg.CopyTo(ms);
-                insert.Img = ms.ToArray();
-            }
+                try
+                {
+                    ItemBasic insert = new ItemBasic()
+                    {
+                        ItemCode = itemCode,
+                        ItemName = ItemBasicCreateViewModel.News.ItemName.Trim(),
+                        Spec = ItemBasicCreateViewModel.News.Spec,
+                        Status = ItemBasicCreateViewModel.News.Status,
+                        SystemUser = _globalSettings.employeeId.Trim()
+                    };
+                    using (var ms = new MemoryStream())
+                    {
+                        myimg.CopyTo(ms);
+                        insert.Img = ms.ToArray();
+                    }
+                    
+                    ItemStock insert2 = new ItemStock()
+                    {
+                        ItemCode = itemCode,
+                        Unit = ItemBasicCreateViewModel.News.Unit,
+                        SafeQty = 0,
+                        TotalQty = 0,
+                        Status = "10", //啟用10，停用20
+                        SystemUser = _globalSettings.employeeId.Trim()
+                    };
 
-            _context.Add(insert);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));  
-        }
+                    _context.Add(insert);
+                    _context.Add(insert2);
+                    await _context.SaveChangesAsync();
+                    // 提交交易
+                    transaction.Commit();
+                }
+                catch(Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    ModelState.AddModelError("", "存檔失敗，請稍後再試。");
+                    return View(ItemBasicCreateViewModel);
+                }
+            }                       
+            return RedirectToAction(nameof(Index));          
+    }
 
-        //新建商品時，產生商品貨號
-        public string generateItemCode(CreateBasics news)
+
+    //新建商品時，產生商品貨號
+    public string generateItemCode(CreateBasics news)
         {
             var itemCode = "0";
             if (news.Spec != null)
@@ -219,7 +229,7 @@ namespace InventoryManagement.Controllers
             return itemCode;    
         }
 
-
+  
         // GET: ItemBasics/Edit/5
         public async Task<IActionResult> Edit(string id)
         {
@@ -254,14 +264,14 @@ namespace InventoryManagement.Controllers
         // POST: ItemBasics/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, ItemBasicsEdit news, IFormFile myimg)
+        public async Task<IActionResult> Edit(ItemBasicsEdit news, IFormFile myimg)
         {
-            if (id.Trim() != news.ItemCode.Trim())
+            if (news.ItemCode == null)
             {
                 return NotFound();
             }
           
-            var update = _context.ItemBasic.Find(id);
+            var update = _context.ItemBasic.Find(news.ItemCode);
 
             if (update != null)
             {
@@ -287,7 +297,7 @@ namespace InventoryManagement.Controllers
             return View(news);
         }
 
-        //將圖片轉換
+        //將圖片轉換成Base64，在畫面顯示
         public static string GetImageBase64(byte[] imageBytes)
         {
             if (imageBytes == null)
@@ -302,33 +312,22 @@ namespace InventoryManagement.Controllers
             return Convert.ToBase64String(ms.ToArray());
         }
 
-        // GET: ItemBasics/Delete/5
+     
+        // POST: ItemBasics/Delete/5
+        [HttpPost]     
         public async Task<IActionResult> Delete(string id)
         {
-            if (id == null)
-            {
+            if (id == null) { 
                 return NotFound();
             }
 
-            var itemBasic = await _context.ItemBasic
-                .FirstOrDefaultAsync(m => m.ItemCode == id);
-            if (itemBasic == null)
-            {
-                return NotFound();
-            }
-
-            return View(itemBasic);
-        }
-
-        // POST: ItemBasics/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
-        {
             var itemBasic = await _context.ItemBasic.FindAsync(id);
-            if (itemBasic != null)
+            var itemStock = await _context.ItemStock.FindAsync(id);
+
+            if (itemBasic != null && itemStock != null)
             {
                 _context.ItemBasic.Remove(itemBasic);
+                _context.ItemStock.Remove(itemStock);
             }
 
             await _context.SaveChangesAsync();

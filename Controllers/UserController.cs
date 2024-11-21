@@ -206,10 +206,6 @@ namespace InventoryManagement.Controllers
             return View(user);
         }
 
-        public string getdata()
-        {
-            return "qqq";
-        }
 
         // POST: Login1/Delete/5
         [HttpPost, ActionName("Delete")]

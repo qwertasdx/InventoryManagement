@@ -82,7 +82,9 @@ public partial class WebContext : DbContext
                 .HasMaxLength(2)
                 .IsUnicode(false)
                 .IsFixedLength();
-            entity.Property(e => e.SystemTime).HasColumnType("datetime");
+            entity.Property(e => e.SystemTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.SystemUser)
                 .HasMaxLength(10)
                 .IsFixedLength();

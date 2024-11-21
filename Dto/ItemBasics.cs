@@ -20,5 +20,9 @@ namespace InventoryManagement.Dto
         public string SpecName { get; set; } = null!;
 
         public byte[] Img { get; set; }
+
+        public DateTime SystemTime { get; set; }
+
+        public int TotalQty { get; set; }
     }
 }

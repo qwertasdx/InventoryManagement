@@ -1,7 +1,6 @@
-﻿@model InventoryManagement.Models.ItemBasic
+﻿@model InventoryManagement.Models.ItemStock
 
 @{
-    Layout = "_Layout";
     ViewData["Title"] = "Delete";
 }
 
@@ -9,20 +8,26 @@
 
 <h3>Are you sure you want to delete this?</h3>
 <div>
-    <h4>ItemBasic</h4>
+    <h4>ItemStock</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ItemName)
+            @Html.DisplayNameFor(model => model.Unit)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ItemName)
+            @Html.DisplayFor(model => model.Unit)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Spec)
+            @Html.DisplayNameFor(model => model.SafeQty)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Spec)
+            @Html.DisplayFor(model => model.SafeQty)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.TotalQty)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.TotalQty)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Status)

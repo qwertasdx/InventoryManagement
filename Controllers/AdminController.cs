@@ -72,9 +72,6 @@ namespace InventoryManagement.Controllers
         }
 
 
-
-        // POST: AdminController/Delete/5
-
         public async Task<IActionResult> Delete(string id)
         {
             var user =  await _context.User.FindAsync(id);

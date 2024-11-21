@@ -23,12 +23,5 @@ namespace InventoryManagement.ViewModel
             new SelectListItem { Text = "停用", Value="20" },
             new SelectListItem { Text = "缺貨", Value="30" },
         };
-
-        public List<SelectListItem> UnitList { get; } = new List<SelectListItem>
-        {
-            new SelectListItem { Text = "件", Value="件" },
-            new SelectListItem { Text = "個", Value="個" },
-            new SelectListItem { Text = "雙", Value="雙" },
-        };
     }
 }

@@ -29,8 +29,18 @@
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" asp-area="" asp-controller="ItemBasics" asp-action="Index">查詢商品基本資料</a></li>
-                                <li><a class="dropdown-item" asp-area="" asp-controller="ItemBasics" asp-action="Create">新增商品基本資料</a></li>
-                                <li><a class="dropdown-item" asp-area="" asp-controller="ItemBasics" asp-action="updateStatus">更新商品狀態</a></li>             
+                                <li><a class="dropdown-item" asp-area="" asp-controller="ItemBasics" asp-action="Create">新增商品基本資料</a></li>            
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                商品庫存
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" asp-area="" asp-controller="ItemStocks" asp-action="searchItemStocks">查詢商品庫存量</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-controller="ItemStocks" asp-action="Index">商品進出貨</a></li>
+                                
+                              
                             </ul>
                         </li>
                         <li class="nav-item dropdown">
@@ -38,9 +48,7 @@
                                 管理人員
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="UserInfos">查詢員工帳密</a></li>
-                              
-                               
+                                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="UserInfos">查詢員工帳密</a></li>                                                      
                             </ul>
                         </li>
                     </ul>

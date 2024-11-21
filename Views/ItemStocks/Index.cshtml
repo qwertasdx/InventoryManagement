@@ -1,0 +1,84 @@
+﻿@model InventoryManagement.Dto.ItemStocks
+@{
+    Layout = "_Layout";
+}
+<style>
+        .form-control {
+            width: 200px; /* 設定 input 欄位的寬度 */
+        }
+        .form-check {
+            margin-top: 5px; 
+        }
+        label {
+            font-size: 18px; 
+        }
+        .radio-label {
+            font-size: 18px; 
+        }
+   
+</style>
+
+<body>
+    <h1>商品進出貨</h1>
+    <form action="/ItemStocks/Index" method="get">
+        <label>商品貨號:</label>
+        <input type="text" name="itemCode" placeholder="商品貨號" />
+        <button type="submit">查詢</button>
+    </form>
+    <br>
+
+    @if (Model != null)
+    {
+        <div class="form-group">
+            <label for="itemCode">商品貨號:</label>
+            <input type="text" class="form-control" id="itemCode" value="@Model.ItemCode" readonly>
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="itemName">商品名稱:</label>
+            <input type="text" class="form-control" id="itemName" value="@Model.ItemName" readonly>
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="unit">單位:</label>
+            <input type="text" class="form-control" id="unit" value="@Model.Unit" readonly>
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="totalQty">總數量:</label>
+            <input type="text" class="form-control" id="totalQty" value="@Model.TotalQty" readonly>
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="status">狀態:</label>
+            <input type="text" class="form-control" id="status" value="@Model.StatusName" readonly>
+        </div>
+        <br>
+        <form action="/ItemStocks/saveQty" method="post">
+            <div class="radio-container">
+                <label class="radio-label">進貨/出貨選擇:</label><br>
+
+                <input type="hidden" name="itemCode" value="@Model.ItemCode" />
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" value="instock" checked>
+                    <label class="form-check-label" for="flexRadioDefault1">
+                        入貨
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" value="outstock">
+                    <label class="form-check-label" for="flexRadioDefault2">
+                        出貨
+                    </label>
+               </div>
+            </div>
+        <div class="form-group">
+            <label for="qty">數量:</label>
+            <input type="text" class="form-control" name="qty"  required>
+        </div><br>
+             
+        <button type="submit" class="btn btn-primary">存檔</button>
+        </form>
+    }
+</body>

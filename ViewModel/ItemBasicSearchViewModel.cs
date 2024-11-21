@@ -11,6 +11,9 @@ namespace InventoryManagement.ViewModel
 
         public List<ItemBasics> News { get; set; }
 
+        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; }
+
         public List<SelectListItem> SpecList { get; } = new List<SelectListItem>
         {
             new SelectListItem { Text = "短袖", Value="10" },
