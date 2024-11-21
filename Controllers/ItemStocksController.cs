@@ -10,6 +10,7 @@ using InventoryManagement.Dto;
 using InventoryManagement.ViewModel;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace InventoryManagement.Controllers
 {
@@ -169,54 +170,58 @@ namespace InventoryManagement.Controllers
         }*/
 
         // GET: ItemStocks/Edit/5
-        public async Task<IActionResult> Edit(string itemCode)
+        public async Task<IActionResult> Edit(string itemCode, string itemName)
         {
             if (itemCode == null)
             {
                 return NotFound();
             }
+            var ItemStocksEditViewModel = new ItemStocksEditViewModel();
 
+            // 總庫存量不可改動
+            ItemStocksEditViewModel.Product =  await(from a in _context.ItemStock
+                                                where a.ItemCode == itemCode
+                                                select new ItemStocksEdit
+                                                {
+                                                    ItemCode = a.ItemCode,
+                                                    ItemName = itemName,
+                                                    Unit = a.Unit,
+                                                    SafeQty = a.SafeQty,
+                                                    TotalQty = a.TotalQty,
+                                                    Status = a.Status
+                                                }).SingleOrDefaultAsync();
 
-            var itemStock = await _context.ItemStock.FindAsync(itemCode);
-
-            if (itemStock == null)
+            
+            if (ItemStocksEditViewModel.Product == null)
             {
                 return NotFound();
             }
-            return View(itemStock);
+            return View(ItemStocksEditViewModel);
         }
 
         // POST: ItemStocks/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("ItemCode,Unit,SafeQty,TotalQty,Status,SystemUser,SystemTime")] ItemStock itemStock)
+        public async Task<IActionResult> Edit(ItemStocksEdit Product)
         {
-            if (id != itemStock.ItemCode)
-            {
-                return NotFound();
-            }
-
+            ModelState["Product.ItemName"].ValidationState = ModelValidationState.Valid; 
             if (ModelState.IsValid)
             {
-                try
+                var update = _context.ItemStock.Find(Product.ItemCode); 
+
+                if (update != null)
                 {
-                    _context.Update(itemStock);
+                    update.SafeQty = Product.SafeQty;
+                    update.Unit = Product.Unit;
+                    update.Status = Product.Status;
+                    update.SystemUser = _globalSettings.employeeId.Trim();
+
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ItemStockExists(itemStock.ItemCode))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                                  
+                return RedirectToAction(nameof(searchItemStocks));
             }
-            return View(itemStock);
+            return View(Product);
         }
 
         // GET: ItemStocks/Delete/5

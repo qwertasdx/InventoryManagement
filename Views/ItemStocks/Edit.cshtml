@@ -1,50 +1,70 @@
-﻿@model InventoryManagement.Models.ItemStock
+﻿@model InventoryManagement.ViewModel.ItemStocksEditViewModel
 
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
+<h1>商品庫存修改</h1>
 
-<h4>ItemStock</h4>
+
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="ItemCode" />
+            <input type="hidden" asp-for="Product.ItemCode" />
             <div class="form-group">
-                <label asp-for="Unit" class="control-label"></label>
-                <input asp-for="Unit" class="form-control" />
-                <span asp-validation-for="Unit" class="text-danger"></span>
-            </div>
+                <label asp-for="Product.ItemName" class="control-label">商品名稱</label>
+                <input asp-for="Product.ItemName" class="form-control" disabled/>
+            </div><br>
             <div class="form-group">
-                <label asp-for="SafeQty" class="control-label"></label>
-                <input asp-for="SafeQty" class="form-control" />
-                <span asp-validation-for="SafeQty" class="text-danger"></span>
-            </div>
+                <label asp-for="Product.Unit" class="control-label">單位</label>
+                <select name="Product.Unit" class="form-select">
+                    @foreach (var temp in Model.UnitList)
+                    {
+                        if (temp.Value == Model.Product.Unit)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="Product.Unit" class="text-danger"></span>
+            </div><br>
             <div class="form-group">
-                <label asp-for="TotalQty" class="control-label"></label>
-                <input asp-for="TotalQty" class="form-control" />
-                <span asp-validation-for="TotalQty" class="text-danger"></span>
-            </div>
+                <label asp-for="Product.SafeQty" class="control-label">安全庫存量</label>
+                <input asp-for="Product.SafeQty" class="form-control" />
+                <span asp-validation-for="Product.SafeQty" class="text-danger"></span>
+            </div><br>
             <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <input asp-for="Status" class="form-control" />
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
+                <label asp-for="Product.TotalQty" class="control-label">總庫存量(不可修改)</label>
+                <input asp-for="Product.TotalQty" class="form-control"  disabled/>
+                <span asp-validation-for="Product.TotalQty" class="text-danger"></span>
+            </div><br>
             <div class="form-group">
-                <label asp-for="SystemUser" class="control-label"></label>
-                <input asp-for="SystemUser" class="form-control" />
-                <span asp-validation-for="SystemUser" class="text-danger"></span>
-            </div>
+                <label asp-for="Product.Status" class="control-label">狀態</label>
+                <select name="Product.Status" class="form-select">
+                    @foreach (var temp in Model.StatusList)
+                    {
+                        if (temp.Value == Model.Product.Status)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }                       
+                    }
+                </select>
+                <span asp-validation-for="Product.Status" class="text-danger"></span>
+            </div><br>
+
             <div class="form-group">
-                <label asp-for="SystemTime" class="control-label"></label>
-                <input asp-for="SystemTime" class="form-control" />
-                <span asp-validation-for="SystemTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="存檔" class="btn btn-primary" />
             </div>
         </form>
     </div>

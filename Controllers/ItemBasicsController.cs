@@ -272,14 +272,22 @@ namespace InventoryManagement.Controllers
             }
           
             var update = _context.ItemBasic.Find(news.ItemCode);
+            var update2 =_context.ItemStock.Find(news.ItemCode);
 
-            if (update != null)
+            if (update != null && update2 != null)
             {
                 update.ItemName = news.ItemName;
                 update.Spec = news.Spec;
                 update.Status = news.Status;
                 update.SystemUser = _globalSettings.employeeId.Trim();
 
+                // 狀態修改，ItemStock也需更動
+                if (update2.Status != news.Status)
+                {
+                    update2.Status = news.Status;
+                    update2.SystemUser = _globalSettings.employeeId.Trim();
+                }
+                
                 using (var ms = new MemoryStream())
                 {
                     //有更新圖片

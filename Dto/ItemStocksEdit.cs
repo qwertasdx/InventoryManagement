@@ -13,7 +13,5 @@
         public int TotalQty { get; set; }
 
         public string Status { get; set; } = null!;
-
-        public string EmployeeId { get; set; } = null!;
     }
 }

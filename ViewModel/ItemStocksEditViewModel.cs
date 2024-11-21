@@ -5,7 +5,7 @@ namespace InventoryManagement.ViewModel
 {
     public class ItemStocksEditViewModel
     {
-        public List<ItemStocksEdit> Products { get; set; }
+        public ItemStocksEdit Product { get; set; }
 
         public List<SelectListItem> StatusList { get; } = new List<SelectListItem>
         {
