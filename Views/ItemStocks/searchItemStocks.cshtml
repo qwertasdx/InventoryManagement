@@ -25,6 +25,7 @@
     }
 
 </style>
+
 <form action="/ItemStocks/searchItemStocks" method="get">
     <label>商品貨號:</label>
     <input type="text" name="itemCode"  />
@@ -42,10 +43,9 @@
             }
         }
     </select>
-
-    
     <button type="submit">搜尋</button>
 </form>
+<br>
 <table class="table">
     <thead>
         <tr>
@@ -100,9 +100,8 @@
             </td>
             <td>
                 <form action="/ItemStocks/Edit" method="get" style="display:inline;">
-                    <input type="hidden" name="itemCode" value="@item.ItemCode" />
-                    <input type="hidden" name="itemName" value="@item.ItemName" />
-                        <input type="hidden" name="status" value="@item.Status" />
+                    <input type="hidden" name="itemCode" value="@item.ItemCode"/>
+                    <input type="hidden" name="itemName" value="@item.ItemName"/>
                     <button type="submit" class="btn btn-secondary">修改</button>
                 </form>
             </td>

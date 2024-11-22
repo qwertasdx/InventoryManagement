@@ -19,6 +19,8 @@ public partial class WebContext : DbContext
 
     public virtual DbSet<ItemStock> ItemStock { get; set; }
 
+    public virtual DbSet<ItemTrans> ItemTrans { get; set; }
+
     public virtual DbSet<News> News { get; set; }
 
     public virtual DbSet<NewsFiles> NewsFiles { get; set; }
@@ -91,6 +93,27 @@ public partial class WebContext : DbContext
             entity.Property(e => e.Unit)
                 .HasMaxLength(2)
                 .IsUnicode(false)
+                .IsFixedLength();
+        });
+
+        modelBuilder.Entity<ItemTrans>(entity =>
+        {
+            entity.HasKey(e => e.TransNo);
+
+            entity.Property(e => e.ItemCode)
+                .HasMaxLength(8)
+                .IsFixedLength();
+            entity.Property(e => e.SystemTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.SystemUser)
+                .HasMaxLength(10)
+                .IsFixedLength();
+            entity.Property(e => e.Type)
+                .HasMaxLength(3)
+                .IsFixedLength();
+            entity.Property(e => e.Unit)
+                .HasMaxLength(2)
                 .IsFixedLength();
         });
 

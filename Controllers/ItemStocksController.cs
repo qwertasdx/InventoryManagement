@@ -11,6 +11,7 @@ using InventoryManagement.ViewModel;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Humanizer;
 
 namespace InventoryManagement.Controllers
 {
@@ -66,24 +67,41 @@ namespace InventoryManagement.Controllers
         public async Task<IActionResult> saveQty(string itemCode, int qty, string flexRadioDefault)
         {
             var product = _context.ItemStock.FirstOrDefault(p => p.ItemCode == itemCode);
+            var type ="";
+          
             if (product != null)
             {
                 if (flexRadioDefault == "instock")
                 {
                     product.TotalQty += qty;
+                    type = "in";
                 }
                 else if (flexRadioDefault == "outstock")
                 {
                     product.TotalQty -= qty;
+                    type = "out";
                 }
                 product.SystemUser = _globalSettings.employeeId;
+
+                //新增出入庫紀錄
+                Models.ItemTrans insert = new Models.ItemTrans()
+                {
+                    ItemCode = itemCode,
+                    Type = type,
+                    TransQty = qty,
+                    Unit = product.Unit,
+                    SystemUser = _globalSettings.employeeId
+                };
                 _context.Update(product);
+                _context.Add(insert);
                 await _context.SaveChangesAsync();
             }
+
             return RedirectToAction("Index");
         }
 
-        public async Task<IActionResult> searchItemStocks(string itemCode,string Status,int page = 1, int pageSize = 10)
+        // 查詢所有商品庫存
+        public async Task<IActionResult> SearchItemStocks(string itemCode,string Status,int page = 1, int pageSize = 10)
         {
             var ItemStocksViewModel = new ItemStocksViewModel();
             var query = from a in _context.ItemStock
@@ -113,6 +131,10 @@ namespace InventoryManagement.Controllers
             if (!string.IsNullOrEmpty(Status))
             {
                 query = query.Where(x=>x.Status == Status);
+            }
+            else
+            {
+                query = query.Where(x => x.Status == "10");
             }
 
             if (!string.IsNullOrEmpty(itemCode))
@@ -147,27 +169,6 @@ namespace InventoryManagement.Controllers
             ItemStocksViewModel.TotalPages = totalPages;
         }
 
-        // GET: ItemStocks/Create
-       /* public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: ItemStocks/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ItemCode,Unit,SafeQty,TotalQty,Status,SystemUser,SystemTime")] ItemStock itemStock)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(itemStock);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(itemStock);
-        }*/
 
         // GET: ItemStocks/Edit/5
         public async Task<IActionResult> Edit(string itemCode, string itemName)
@@ -219,47 +220,76 @@ namespace InventoryManagement.Controllers
                     await _context.SaveChangesAsync();
                 }
                                   
-                return RedirectToAction(nameof(searchItemStocks));
+                return RedirectToAction(nameof(SearchItemStocks));
             }
+            
             return View(Product);
         }
 
-        // GET: ItemStocks/Delete/5
-        public async Task<IActionResult> Delete(string id)
+        //商品出入庫紀錄查詢
+        public async Task<IActionResult> SearchItemTrans(string type , DateTime startDate, DateTime endDate,int page = 1, int pageSize = 10)
         {
-            if (id == null)
+            var result = from a in _context.ItemTrans
+                         join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
+                         join c in _context.User on a.SystemUser equals c.EmployeeId
+                         group new { a, b, c } by new
+                         {
+                             ItemCode = a.ItemCode,
+                             ItemName = b.ItemName,
+                             Unit = a.Unit,
+                             TransQty = a.TransQty,
+                             EmployeeName = c.EmployeeName,
+                             SystemTime = a.SystemTime,
+                             Type = a.Type,
+                         } into g
+                         select new Dto.ItemTrans
+                         {
+                             ItemCode = g.Key.ItemCode,
+                             ItemName = g.Key.ItemName,
+                             Unit = g.Key.Unit,
+                             TransQty = g.Key.TransQty,
+                             EmployeeName = g.Key.EmployeeName,
+                             SystemTime = g.Key.SystemTime,
+                             Type = g.Key.Type
+                         };
+
+            if (!string.IsNullOrEmpty(type))
             {
-                return NotFound();
+                result = result.Where(x => x.Type == type);
             }
 
-            var itemStock = await _context.ItemStock
-                .FirstOrDefaultAsync(m => m.ItemCode == id);
-            if (itemStock == null)
+            if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
             {
-                return NotFound();
+                result = result.Where(x => x.SystemTime >= startDate && x.SystemTime <= endDate);
+                @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
+                @ViewBag.endDate = endDate.ToString("yyyy-MM-dd");
             }
 
-            return View(itemStock);
+            var ItemTransViewModel = new ItemTransViewModel();
+            ItemTransViewModel.Trans = await result.ToListAsync();
+
+            foreach (var item in ItemTransViewModel.Trans)
+            {
+                typeName(item);
+            }
+            @ViewBag.selectType = type;
+            Pagination2(page, pageSize, ItemTransViewModel);
+
+            return View(ItemTransViewModel);
         }
 
-        // POST: ItemStocks/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
+        //設定分頁，10筆資料為一頁
+        public void Pagination2(int page, int pageSize, ItemTransViewModel ItemTransViewModel)
         {
-            var itemStock = await _context.ItemStock.FindAsync(id);
-            if (itemStock != null)
-            {
-                _context.ItemStock.Remove(itemStock);
-            }
+            var items = ItemTransViewModel.Trans; // 獲取所有項目
+            var totalItems = items.Count();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-        private bool ItemStockExists(string id)
-        {
-            return _context.ItemStock.Any(e => e.ItemCode == id);
+            ItemTransViewModel.Trans = pagedItems;
+            ItemTransViewModel.CurrentPage = page;
+            ItemTransViewModel.TotalPages = totalPages;
         }
 
         // 對照狀態
@@ -275,6 +305,22 @@ namespace InventoryManagement.Controllers
                     break;
                 default:
                     item.StatusName = "啟用";
+                    break;
+            }
+        }
+
+        public void typeName(Dto.ItemTrans item)
+        {
+            switch (item.Type.Trim())
+            {
+                case "in":
+                    item.TypeName = "入貨";
+                    break;
+                case "out":
+                    item.TypeName = "出貨";
+                    break;
+                default:
+                    item.TypeName = "";
                     break;
             }
         }
