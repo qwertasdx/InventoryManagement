@@ -47,7 +47,7 @@
             </div><br>
             <div class="form-group">
                 <label asp-for="Product.Status" class="control-label">狀態</label>
-                <select name="Product.Status" class="form-select">
+                <select name="Product.Status" class="form-select" disabled>
                     @foreach (var temp in Model.StatusList)
                     {
                         if (temp.Value == Model.Product.Status)
@@ -71,7 +71,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="SearchItemStocks">Back to List</a>
 </div>
 
 @section Scripts {

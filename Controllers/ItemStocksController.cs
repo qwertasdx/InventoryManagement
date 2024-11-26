@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Models;
 using InventoryManagement.Dto;
 using InventoryManagement.ViewModel;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Humanizer;
+
 
 namespace InventoryManagement.Controllers
 {
@@ -260,7 +257,7 @@ namespace InventoryManagement.Controllers
 
             if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
             {
-                result = result.Where(x => x.SystemTime >= startDate && x.SystemTime <= endDate);
+                result = result.Where(x => x.SystemTime >= startDate.Date && x.SystemTime <= endDate.Date.AddDays(1));
                 @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
                 @ViewBag.endDate = endDate.ToString("yyyy-MM-dd");
             }

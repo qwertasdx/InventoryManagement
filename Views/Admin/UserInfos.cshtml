@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InventoryManagement.Models.User>
+﻿@model IEnumerable<InventoryManagement.Dto.Users>
 @{
     Layout = "_Layout";
 }
@@ -21,7 +21,7 @@
                 帳號
             </th>
             <th>
-                密碼
+                身分
             </th>
             <th></th>
         </tr>
@@ -40,14 +40,22 @@
                     @Html.DisplayFor(modelItem => item.Account)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Password)
+                    @Html.DisplayFor(modelItem => item.RoleName)
                 </td>
                 <td>
-                    <a  asp-action="Delete" asp-route-id="@item.EmployeeId">刪除</a>
+                    <form action="/Admin/Edit" method="get" style="display:inline;">
+                        <input type="hidden" name="employeeId" value="@item.EmployeeId" />
+                        <button type="submit" class="btn btn-secondary">修改</button>
+                    </form>
+                    <form action="/Admin/Delete" method="post" style="display:inline;">
+                       <input type="hidden" name="employeeId" value="@item.EmployeeId" />
+                       <button type="submit" class="btn btn-danger" onclick="return confirm('您確定要刪除這個項目嗎？');">刪除</button>
+                    </form>                               
                 </td>
             </tr>      
         }
     </tbody>
 </table>
+
 
 

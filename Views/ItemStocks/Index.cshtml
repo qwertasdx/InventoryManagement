@@ -1,6 +1,7 @@
 ﻿@model InventoryManagement.Dto.ItemStocks
 @{
     Layout = "_Layout";
+    ViewData["Title"] = "查詢商品庫存量";
 }
 <style>
         .form-control {
@@ -20,13 +21,14 @@
 
 <body>
     <h1>商品進出貨</h1>
+    <hr />
     <form action="/ItemStocks/Index" method="get">
         <label>商品貨號:</label>
         <input type="text" name="itemCode" placeholder="商品貨號" />
         <button type="submit">查詢</button>
     </form>
     <br>
-
+  
     @if (Model != null)
     {
         <div class="form-group">

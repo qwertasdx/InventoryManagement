@@ -24,7 +24,7 @@
             </div><br>
             <div class="form-group">
                 <label asp-for="News.Spec" class="control-label">分類</label>
-                <select name="News.Spec" class="form-select">
+                <select name="News.Spec" class="form-select" disabled>
                     @foreach (var temp in Model.SpecList)
                     {
                         if (temp.Value == ViewBag.selectSpec)

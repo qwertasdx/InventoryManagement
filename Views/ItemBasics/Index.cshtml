@@ -193,11 +193,3 @@
             });
     }
 </script>
-<script>
-    function confirmDelete(itemCode) {
-        if (confirm('您確定要刪除這個項目嗎？')) {
-            // 如果用戶確認，則重定向到刪除操作
-            window.location.href = '@Url.Action("Delete", new { id = "__itemCode__" })'.replace('__itemCode__', itemCode);
-        }
-    }
-</script>

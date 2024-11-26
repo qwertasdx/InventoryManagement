@@ -1,0 +1,58 @@
+﻿@model InventoryManagement.ViewModel.UsersViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "修改人員身分";
+}
+
+<h1>修改人員身分</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Users.EmployeeId" class="control-label">員工編號</label>
+                <input asp-for="Users.EmployeeId" class="form-control"  disabled />
+                <span asp-validation-for="Users.EmployeeId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Users.EmployeeName" class="control-label">員工姓名</label>
+                <input asp-for="Users.EmployeeName" class="form-control" disabled />
+                <span asp-validation-for="Users.EmployeeName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Users.Account" class="control-label">帳號</label>
+                <input asp-for="Users.Account" class="form-control" disabled />
+                <span asp-validation-for="Users.Account" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Users.RoleName" class="control-label">身分</label>
+                <select name="roleName" class="form-select">
+                    @foreach (var temp in Model.RoleNameList)
+                    {
+                        if (temp.Value == ViewBag.selectRole)
+                        {
+                            <option value="@temp.Value" selected>@temp.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@temp.Value">@temp.Text</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="Users.RoleName" class="text-danger"></span>
+            </div><br>
+            <div class="form-group">
+                <input type="hidden" name="employeeId" value= @Model.Users.EmployeeId>
+                <input type="submit" value="存檔" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

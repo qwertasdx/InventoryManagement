@@ -1,8 +1,12 @@
-﻿using InventoryManagement.Models;
+﻿using InventoryManagement.Dto;
+using InventoryManagement.Models;
+using InventoryManagement.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+
 
 
 namespace InventoryManagement.Controllers
@@ -19,62 +23,70 @@ namespace InventoryManagement.Controllers
         public async Task<IActionResult> UserInfos()
         {
             var result = await (from a in _context.User
-                                select a).ToListAsync();
+                                select new Users
+                                {
+                                    EmployeeId = a.EmployeeId,
+                                    EmployeeName = a.EmployeeName,
+                                    Account = a.Account,
+                                    Role = a.Role
+                                }).ToListAsync();
+
+            foreach (var item in result)
+            {
+                if (item.Role.Trim() == "admin")
+                {
+                    item.RoleName = "管理人員";
+                }
+                else
+                {
+                    item.RoleName = "一般人員";
+                }
+            }
             return View(result);
         }
 
-        // GET: AdminController/Details/5
-        public ActionResult Details(int id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(string employeeId)
         {
-            return View();
-        }
+            var UsersViewModel = new UsersViewModel();
 
-        // GET: AdminController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
+            UsersViewModel.Users = await(from a in _context.User
+                                   where a.EmployeeId == employeeId
+                                   select new Users 
+                                   { 
+                                       EmployeeId = a.EmployeeId,
+                                       EmployeeName = a.EmployeeName,
+                                       Account = a.Account,
+                                       Role = a.Role
+                                   }).SingleOrDefaultAsync();
 
-        // POST: AdminController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+            ViewBag.selectRole = UsersViewModel.Users.Role.Trim();
 
-        // GET: AdminController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
+            return View(UsersViewModel);
         }
 
         // POST: AdminController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Edit(string roleName, string employeeId)
         {
-            try
+            var update = await _context.User.FindAsync(employeeId);
+
+            if (update != null && update.Role.Trim()!= roleName)
             {
-                return RedirectToAction(nameof(Index));
+                update.Role = roleName;
+                await _context.SaveChangesAsync();
             }
-            catch
-            {
-                return View();
-            }
+          
+            return RedirectToAction(nameof(UserInfos));
         }
 
 
-        public async Task<IActionResult> Delete(string id)
+        // 刪除員工帳密
+        [HttpPost]
+        public async Task<IActionResult> Delete(string employeeId)
         {
-            var user =  await _context.User.FindAsync(id);
+            var user =  await _context.User.FindAsync(employeeId.Trim());
             if (user != null)
             {
                 _context.User.Remove(user);
