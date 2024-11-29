@@ -2,6 +2,8 @@
 {
     public class CreateBasics
     {
+        public string ItemCode { get; set; } = null!;
+
         public string ItemName { get; set; } = null!;
 
         public string Spec { get; set; } = null!;

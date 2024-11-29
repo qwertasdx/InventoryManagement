@@ -7,6 +7,7 @@
         public string ItemName { get; set; } = null!;
 
         public string Spec { get; set; } = null!;
+        public string SpecName { get; set; } = null!;
 
         public string Status { get; set; } = null!;
 

@@ -17,5 +17,8 @@
         public string SystemUser { get; set; } = null!;
 
         public DateTime SystemTime { get; set; }
+
+        // Trans2
+        public string? Reason { get; set; } = null!;
     }
 }

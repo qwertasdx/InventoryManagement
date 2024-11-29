@@ -23,20 +23,8 @@
                 <span asp-validation-for="News.ItemName" class="text-danger"></span>
             </div><br>
             <div class="form-group">
-                <label asp-for="News.Spec" class="control-label">分類</label>
-                <select name="News.Spec" class="form-select" disabled>
-                    @foreach (var temp in Model.SpecList)
-                    {
-                        if (temp.Value == ViewBag.selectSpec)
-                        {
-                            <option value="@temp.Value" selected>@temp.Text</option>
-                        }
-                        else
-                        {
-                            <option value="@temp.Value">@temp.Text</option>
-                        }
-                    }
-                </select>     
+                <label asp-for="News.SpecName" class="control-label">分類(不可修改)</label>
+                <input asp-for="News.SpecName" class="form-control" disabled>
                 <span asp-validation-for="News.Spec" class="text-danger"></span>
             </div><br>           
             <div class="form-group">
@@ -62,6 +50,16 @@
                 <input asp-for="News.NewImg" accept="image/*" type="file" name="myimg" id="myimg" multiple class="form-control">
                 <p id="message"></p>
             </div><br>
+
+            @*顯示原來照片*@
+            @if (!string.IsNullOrEmpty(Model.imageBase64))
+            {
+                <img id="preview" src="data:image/png;base64,@Model.imageBase64" style="max-height:200px;" />
+            }
+
+            <div class="form-group">
+                <img id="preview" style="max-height:200px;" />
+            </div><br>
             <input type="hidden" asp-for="News.Img" >
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
@@ -71,7 +69,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">返回首頁</a>
 </div>
 
 @section Scripts {
@@ -85,15 +83,36 @@
     fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
 
+        // 釋放記憶體
+        if (file && window.previewObjectURL) {
+            URL.revokeObjectURL(window.previewObjectURL);
+        }
+
         if (file) {
             const fileType = file.type;
+            const fileSize = file.size;
 
-            // 檢查文件類型是否為圖片
+            // 確認檔案是否為圖片
             if (!fileType.startsWith('image/')) {
                 message.textContent = '請上傳有效的圖片檔案！';
-                fileInput.value = ''; // 清空選擇的文件
-            } else{
+                fileInput.value = '';
+                document.getElementById('preview').src = '';
+            }
+
+            // 不可以上傳超過 5MB 的檔案
+            else if (fileSize > 5 * 1024 * 1024) {
+                message.textContent = '圖片檔案過大！請選擇小於5MB的圖片。';
+                fileInput.value = ''; //
+                document.getElementById('preview').src = '';
+            }
+            else {
                 message.textContent = "";
+
+                const objectURL = URL.createObjectURL(file);
+                window.previewObjectURL = objectURL;
+
+                // 顯示上傳圖片
+                document.getElementById('preview').src = objectURL;
             }
         }
     });

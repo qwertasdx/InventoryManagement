@@ -26,6 +26,7 @@
 </style>
 
 <h1>商品基本資料</h1>
+<hr />
 <div>
 <form action="/ItemBasics/Index" method="get">
     <label>產品狀態:</label>
@@ -176,13 +177,13 @@
 
 <script>
     function showImage(ItemCode) {
-        // 假設你有一個 API 可以根據 itemCode 獲取圖片的 Base64 編碼
+        // 根據 itemCode 獲取圖片的 Base64 編碼
         fetch(`/ItemBasics/GetImg/${ItemCode.id}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                return response.text(); // 直接返回文本，因為是 Base64 字串
+                return response.text(); 
             })
             .then(base64Image => {
                 document.getElementById('modalImage').src = `data:image/png;base64,${base64Image}`;

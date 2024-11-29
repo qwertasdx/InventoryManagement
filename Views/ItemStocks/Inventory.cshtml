@@ -1,0 +1,211 @@
+﻿@model InventoryManagement.ViewModel.ItemStocksViewModel
+@{
+    Layout = "_Layout";
+}
+
+<style>
+
+    /* 每隔一行底色用淡藍色 */
+    .table tbody tr:nth-child(even) {
+        background-color: #e7f3fe; /* 淡藍色 */
+    }
+
+    .fixed-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: white; /* 可根據需要調整背景色 */
+        padding: 10px 0; /* 調整上下內邊距 */
+        z-index: 1000; /* 確保在最上層 */
+    }
+</style>
+<h1>盤點作業</h1>
+<hr />
+<form action="/ItemStocks/Inventory" method="get">
+    <input type="text" name="itemCode" placeholder="商品貨號" />
+    <button type="submit">查詢</button>
+</form>
+<br>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    商品貨號
+                </th>
+                <th>
+                    商品名稱
+                </th>
+                <th>
+                    單位
+                </th>
+                <th>
+                    總庫存量
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Products)
+            {        
+                <tr>   
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ItemCode)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ItemName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Unit)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TotalQty)
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#InventoryModal" data-ItemName="@item.ItemName"
+                                data-itemcode="@item.ItemCode" data-totalQty="@item.TotalQty" onclick="inventory(this)">
+                            盤點
+                        </button>
+                    </td>
+                  
+                </tr>          
+            }
+        </tbody>
+       
+    </table>
+</div>
+
+<!-- 分頁按鈕 -->
+<nav aria-label="Page navigation" class="fixed-bottom">
+    <ul class="pagination justify-content-center">
+        @if (Model.CurrentPage > 1)
+        {
+            <li class="page-item">
+                <a class="page-link" href="/ItemStocks/Inventory?page=@(Model.CurrentPage - 1)">上一頁</a>
+            </li>
+        }
+
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" href="/ItemStocks/Inventory?page=@i">@i </a>
+
+            </li>
+        }
+
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <li class="page-item">
+                <a class="page-link" href="/ItemStocks/Inventory?page=@(Model.CurrentPage + 1)">下一頁</a>
+            </li>
+
+        }
+    </ul>
+</nav>
+
+<!-- Modal -->
+<div class="modal fade" id="InventoryModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="InventoryModalLabel" >
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="InventoryModalLabel">盤點</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="recipient-name" class="col-form-label">商品名稱:</label>
+                        <input type="text" class="form-control" id="recipient-name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inventory-qty" class="col-form-label">盤點數量:</label>
+                        <input type="number" class="form-control" id="inventory-qty" min="0" step="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="diff-qty" class="col-form-label">盤點差異:</label>
+                        <input type="number" class="form-control" id="diff-qty" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="col-form-label">原因:</label>
+                        <input type="text" class="form-control" id="reason" >
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" name="itemCode" class="btn btn-primary" onclick="save()">存檔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function inventory(button) {
+        const modal = document.getElementById('InventoryModal');
+        const modalTitle = modal.querySelector('.modal-title');
+        const recipientInput = modal.querySelector('#recipient-name');
+        const inventoryQtyInput = modal.querySelector('#inventory-qty');
+        const diffQtyInput = modal.querySelector('#diff-qty');
+        const reasonInput = modal.querySelector('#reason');
+
+        // 按鈕的屬性值
+        const itemName = button.getAttribute('data-ItemName');
+        const itemCode = button.getAttribute('data-itemcode');
+        const totalQty = parseInt(button.getAttribute('data-totalQty'), 10);
+
+        // 更新模態框內容
+        modalTitle.textContent = `盤點商品: ${itemCode}`;
+        recipientInput.value = itemName;
+        inventoryQtyInput.value = ''; // 清空之前的輸入值
+        diffQtyInput.value = ''; // 清空差異
+        reasonInput.value = ''; // 清空原因
+
+        // 移除先前的監聽器
+        inventoryQtyInput.removeEventListener('input', updateDiff);
+
+        // 計算差異的函數
+        function updateDiff() {
+            const inventoryQty = parseInt(inventoryQtyInput.value, 10) || 0;
+            diffQtyInput.value = isNaN(inventoryQty) ? 'N/A' : inventoryQty - totalQty;
+        }
+
+        // 添加新的監聽器
+        inventoryQtyInput.addEventListener('input', updateDiff);
+    }
+
+    // 存檔
+    function save() {
+        const modal = document.getElementById('InventoryModal');
+        const modalTitle = modal.querySelector('.modal-title');
+        const recipientInput = modal.querySelector('#recipient-name');
+        const inventoryQtyInput = modal.querySelector('#inventory-qty');
+        const diffQtyInput = modal.querySelector('#diff-qty');
+        const reasonInput = modal.querySelector('#reason');
+
+        // 構建提交的數據
+        const payload = {
+            itemCode: modalTitle.textContent.split(': ')[1], // 從模態框標題獲取
+            itemName: recipientInput.value,
+            inventoryQty: inventoryQtyInput.value,
+            diffQty: diffQtyInput.value,
+            reason: reasonInput.value
+        };
+
+        // 發送到後端的請求
+        fetch(`/ItemStocks/UpdateInventory`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+                 
+        // 關閉模態框
+        const bootstrapModal = bootstrap.Modal.getInstance(modal);
+        bootstrapModal.hide();
+    }
+   
+</script>
+
+

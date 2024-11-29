@@ -8,6 +8,7 @@ using InventoryManagement.Models;
 using InventoryManagement.Dto;
 using InventoryManagement.ViewModel;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Drawing;
 
 
 namespace InventoryManagement.Controllers
@@ -16,13 +17,14 @@ namespace InventoryManagement.Controllers
     {
         private readonly WebContext _context;
         private readonly GlobalSettings _globalSettings;
+        //private readonly ItemStocksController _itemStocksController;
 
-        public ItemStocksController(WebContext context, GlobalSettings globalSettings)
+        public ItemStocksController(WebContext context, GlobalSettings globalSettings)//,ItemStocksController itemStocksController)
         {
             _context = context;
             _globalSettings = globalSettings;
+            //_itemStocksController = itemStocksController;
         }
-
  
         // GET: ItemStocks 出入庫
         public async Task<IActionResult> Index(string itemCode)
@@ -237,7 +239,7 @@ namespace InventoryManagement.Controllers
                              TransQty = a.TransQty,
                              EmployeeName = c.EmployeeName,
                              SystemTime = a.SystemTime,
-                             Type = a.Type,
+                             Type = a.Type
                          } into g
                          select new Dto.ItemTrans
                          {
@@ -289,6 +291,154 @@ namespace InventoryManagement.Controllers
             ItemTransViewModel.TotalPages = totalPages;
         }
 
+        // 需購買之商品_列出低於安全庫存量且狀態為啟用
+        public async Task<IActionResult> NeedBuy(int page = 1, int pageSize = 10)
+        {
+            var query = from a in _context.ItemBasic
+                        join b in _context.ItemStock on a.ItemCode equals b.ItemCode
+                        where b.Status == "10"
+                        where b.TotalQty < b.SafeQty
+                        select new ItemStocks 
+                        {
+                            ItemCode = b.ItemCode,
+                            ItemName = a.ItemName,
+                            SafeQty = b.SafeQty,
+                            TotalQty = b.TotalQty,
+                            Unit = b.Unit                        
+                        };
+
+            var ItemStocksViewModel = new ItemStocksViewModel();
+            ItemStocksViewModel.Products = await query.ToListAsync();
+
+            Pagination(page, pageSize, ItemStocksViewModel);
+
+            return View(ItemStocksViewModel);
+        }
+
+        // 列出所有盤點商品 (狀態為啟用才盤點)
+        public async Task<IActionResult> Inventory(string itemCode , int page = 1, int pageSize = 10)
+        {
+            var ItemStocksViewModel = new ItemStocksViewModel();
+            var query = from a in _context.ItemStock
+                        join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
+                        where a.Status == "10"
+                        select new ItemStocks
+                        {
+                            ItemCode = a.ItemCode,
+                            ItemName = b.ItemName,
+                            Unit = a.Unit,
+                            TotalQty = a.TotalQty
+                        };
+
+            if (!string.IsNullOrEmpty(itemCode))
+            {
+                query = query.Where(x=>x.ItemCode == itemCode);
+            }
+
+            ItemStocksViewModel.Products = await query.ToListAsync();
+            Pagination(page, pageSize, ItemStocksViewModel);
+            return View(ItemStocksViewModel);
+        }
+
+        // 盤點
+        [HttpPost]
+        public  IActionResult UpdateInventory([FromBody] InventoryUpdate inventoryUpdate)
+        {
+            if (inventoryUpdate != null)
+            {
+                var update = _context.ItemStock.Find(inventoryUpdate.ItemCode);
+
+                if(update != null)
+                {
+                    update.TotalQty = inventoryUpdate.InventoryQty;
+                    update.SystemUser = _globalSettings.employeeId;
+      
+                    // 新增盤盈/盤虧紀錄
+                    Models.ItemTrans2 insert = new Models.ItemTrans2() 
+                    {
+                        ItemCode = update.ItemCode,
+                        Unit = update.Unit,        
+                        TransQty = inventoryUpdate.DiffQty,
+                        Reason = inventoryUpdate.Reason,
+                        SystemUser = _globalSettings.employeeId
+                    };
+
+                    if (inventoryUpdate.DiffQty < 0)
+                    {
+                        insert.Type = "out";
+                    }
+                    else
+                    {
+                        insert.Type = "in";
+                    }
+
+                    _context.Update(update);
+                    _context.Add(insert);
+                    _context.SaveChangesAsync();
+
+                   return Ok("存檔成功");
+                }          
+            }
+
+            return BadRequest(new { success = false, message = "盤點失敗，請檢查輸入數據" });
+        }
+
+        // 查詢盤點紀錄
+        public async Task<IActionResult> SearchInventory(string type, DateTime startDate, DateTime endDate, int page = 1, int pageSize = 10)
+        {
+            var result = from a in _context.ItemTrans2
+                         join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
+                         join c in _context.User on a.SystemUser equals c.EmployeeId
+                         group new { a, b, c } by new
+                         {
+                             ItemCode = a.ItemCode,
+                             ItemName = b.ItemName,
+                             Unit = a.Unit,
+                             TransQty = a.TransQty,
+                             EmployeeName = c.EmployeeName,
+                             SystemTime = a.SystemTime,
+                             Type = a.Type,
+                             Reason = a.Reason
+                         } into g
+                         select new Dto.ItemTrans
+                         {
+                             ItemCode = g.Key.ItemCode,
+                             ItemName = g.Key.ItemName,
+                             Unit = g.Key.Unit,
+                             TransQty = g.Key.TransQty,
+                             EmployeeName = g.Key.EmployeeName,
+                             SystemTime = g.Key.SystemTime,
+                             Type = g.Key.Type,
+                             Reason = g.Key.Reason
+                         };
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                result = result.Where(x => x.Type == type);
+            }
+
+            if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
+            {
+                result = result.Where(x => x.SystemTime >= startDate.Date && x.SystemTime <= endDate.Date.AddDays(1));
+                @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
+                @ViewBag.endDate = endDate.ToString("yyyy-MM-dd");
+            }
+
+            var ItemTransViewModel = new ItemTransViewModel();
+            ItemTransViewModel.Trans = await result.ToListAsync();
+
+            foreach (var item in ItemTransViewModel.Trans)
+            {
+                inventoryTypeName(item);
+            }
+
+            @ViewBag.selectType = type;
+            Pagination2(page, pageSize, ItemTransViewModel);
+
+            return View(ItemTransViewModel);
+        }
+
+
         // 對照狀態
         public void StatusName(ItemStocks item)
         {
@@ -315,6 +465,22 @@ namespace InventoryManagement.Controllers
                     break;
                 case "out":
                     item.TypeName = "出貨";
+                    break;
+                default:
+                    item.TypeName = "";
+                    break;
+            }
+        }
+
+        public void inventoryTypeName(Dto.ItemTrans item)
+        {
+            switch (item.Type.Trim())
+            {
+                case "in":
+                    item.TypeName = "盤盈";
+                    break;
+                case "out":
+                    item.TypeName = "盤虧";
                     break;
                 default:
                     item.TypeName = "";

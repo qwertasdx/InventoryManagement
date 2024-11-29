@@ -106,10 +106,10 @@ namespace InventoryManagement.Controllers
             ItemBasicSearchViewModel.SpecList.Insert(0, new SelectListItem("全部", "0"));
 
             //組前端資料
-            foreach (var item in ItemBasicSearchViewModel.News)
+            foreach (var item in ItemBasicSearchViewModel.News) 
             {
                 this.StatusName(item);
-                this.SpecName(item);
+                item.SpecName = SpecName(item.Spec);
             }
 
             Pagination(page, pageSize, ItemBasicSearchViewModel);
@@ -140,8 +140,7 @@ namespace InventoryManagement.Controllers
                           where a.ItemCode == id
                           select  a.Img).SingleOrDefault();
               
-            ViewBag.img = GetImageBase64(result);
-            return ViewBag.img;
+            return GetImageBase64(result);
         }
 
         // GET: ItemBasics/Create
@@ -170,6 +169,8 @@ namespace InventoryManagement.Controllers
                         Status = ItemBasicCreateViewModel.News.Status,
                         SystemUser = _globalSettings.employeeId.Trim()
                     };
+
+                    // 將圖片能夠儲存在資料庫的 byte[] 型別欄位
                     using (var ms = new MemoryStream())
                     {
                         myimg.CopyTo(ms);
@@ -251,13 +252,16 @@ namespace InventoryManagement.Controllers
                                                 Status = a.Status
                                             }).SingleOrDefault();
 
-            ViewBag.selectSpec = ItemBasicsEditViewModel.News.Spec.Trim();
-            ViewBag.selectStatus = ItemBasicsEditViewModel.News.Status.Trim();
-
             if (ItemBasicsEditViewModel.News == null)
             {
                 return NotFound();
             }
+
+            ViewBag.selectStatus = ItemBasicsEditViewModel.News.Status.Trim();
+            ItemBasicsEditViewModel.News.SpecName = SpecName(ItemBasicsEditViewModel.News.Spec);
+
+            ItemBasicsEditViewModel.imageBase64 = GetImageBase64(ItemBasicsEditViewModel.News.Img);
+
             return View(ItemBasicsEditViewModel);
         }
 
@@ -277,7 +281,6 @@ namespace InventoryManagement.Controllers
             if (update != null && update2 != null)
             {
                 update.ItemName = news.ItemName;
-                update.Spec = news.Spec;
                 update.Status = news.Status;
                 update.SystemUser = _globalSettings.employeeId.Trim();
 
@@ -367,35 +370,37 @@ namespace InventoryManagement.Controllers
             }
         }
 
-        public void SpecName(ItemBasics item)
+        public string SpecName(string spec)
         {
-            switch (item.Spec.Trim())
+            var specName = "";
+            switch (spec.Trim())
             {
                 case "10":
-                    item.SpecName = "短袖";
+                    specName = "短袖";
                     break;
                 case "11":
-                    item.SpecName = "長袖";
+                    specName = "長袖";
                     break;
                 case "12":
-                    item.SpecName = "背心";
+                    specName = "背心";
                     break;
                 case "20":
-                    item.SpecName = "短褲";
+                    specName = "短褲";
                     break;
                 case "21":
-                    item.SpecName = "長褲";
+                    specName = "長褲";
                     break;
                 case "30":
-                    item.SpecName = "包包";
+                    specName = "包包";
                     break;
                 case "31":
-                    item.SpecName = "飾品";
+                    specName = "飾品";
                     break;
                 default:
-                    item.SpecName = "全部";
+                    specName = "全部";
                     break;
             }
+            return specName;
         }
 
         //依據分類轉為商品貨號(前3碼)

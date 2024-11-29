@@ -1,6 +1,7 @@
 using InventoryManagement.Controllers;
 using InventoryManagement.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,6 +36,8 @@ builder.Services.AddMvc(options =>
 builder.Services.AddDbContext<WebContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("WebDatabase")));
 
+//¥[¤JItemStocksController API
+//builder.Services.AddTransient<ItemStocksController>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
