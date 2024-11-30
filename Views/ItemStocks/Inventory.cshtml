@@ -1,6 +1,7 @@
 ﻿@model InventoryManagement.ViewModel.ItemStocksViewModel
 @{
     Layout = "_Layout";
+    ViewData["Title"] = "盤點作業";
 }
 
 <style>
@@ -22,12 +23,13 @@
 </style>
 <h1>盤點作業</h1>
 <hr />
+
 <form action="/ItemStocks/Inventory" method="get">
     <input type="text" name="itemCode" placeholder="商品貨號" />
     <button type="submit">查詢</button>
 </form>
 <br>
-<div class="table-responsive">
+
     <table class="table">
         <thead>
             <tr>
@@ -43,6 +45,7 @@
                 <th>
                     總庫存量
                 </th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -50,16 +53,16 @@
             {        
                 <tr>   
                     <td>
-                        @Html.DisplayFor(modelItem => item.ItemCode)
+                        @item.ItemCode
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.ItemName)
+                        @item.ItemName
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Unit)
+                        @item.Unit
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.TotalQty)
+                        @item.TotalQty
                     </td>
                     <td>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
@@ -67,14 +70,12 @@
                                 data-itemcode="@item.ItemCode" data-totalQty="@item.TotalQty" onclick="inventory(this)">
                             盤點
                         </button>
-                    </td>
-                  
+                    </td>                 
                 </tr>          
             }
-        </tbody>
-       
+        </tbody>     
     </table>
-</div>
+
 
 <!-- 分頁按鈕 -->
 <nav aria-label="Page navigation" class="fixed-bottom">
@@ -204,6 +205,11 @@
         // 關閉模態框
         const bootstrapModal = bootstrap.Modal.getInstance(modal);
         bootstrapModal.hide();
+
+       // 延遲 100 毫秒後重新加載頁面
+       setTimeout(() => {
+           location.reload();
+       }, 1000);  // 1 秒後重載頁面，讓其他操作完成
     }
    
 </script>

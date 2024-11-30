@@ -31,13 +31,13 @@ namespace InventoryManagement.Controllers
         {
             // 初始化結果為空集合
             var query = Enumerable.Empty<ItemStocks>().AsQueryable();
+            TempData["EmployeeName"] = _globalSettings.employeeName;
 
-            // 只有當 itemCode 不為空時才查詢資料
             if (!string.IsNullOrEmpty(itemCode))
             {
                 query = from a in _context.ItemBasic
                          join b in _context.ItemStock on a.ItemCode equals b.ItemCode
-                         where b.ItemCode == itemCode // 直接在這裡過濾
+                         where b.ItemCode == itemCode 
                          select new ItemStocks
                          {
                              ItemCode = b.ItemCode,
@@ -96,36 +96,37 @@ namespace InventoryManagement.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction("SearchItemStocks");
         }
 
         // 查詢所有商品庫存
         public async Task<IActionResult> SearchItemStocks(string itemCode,string Status,int page = 1, int pageSize = 10)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var ItemStocksViewModel = new ItemStocksViewModel();
             var query = from a in _context.ItemStock
-                                           join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
-                                           join c in _context.User on b.SystemUser equals c.EmployeeId
-                                           group new { a, b, c } by new
-                                           {
-                                               a.ItemCode,
-                                               b.ItemName,
-                                               a.Unit,
-                                               a.SafeQty,
-                                               a.TotalQty,
-                                               a.Status,
-                                               c.EmployeeName
-                                           } into g
-                                           select new ItemStocks
-                                           {
-                                               ItemCode = g.Key.ItemCode,
-                                               ItemName = g.Key.ItemName,
-                                               Unit = g.Key.Unit,
-                                               SafeQty = g.Key.SafeQty,
-                                               TotalQty = g.Key.TotalQty,
-                                               Status = g.Key.Status,
-                                               EmployeeName = g.Key.EmployeeName
-                                           };
+                        join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
+                        join c in _context.User on a.SystemUser equals c.EmployeeId
+                        group new { a, b, c } by new
+                        {
+                            a.ItemCode,
+                            b.ItemName,
+                            a.Unit,
+                            a.SafeQty,
+                            a.TotalQty,
+                            a.Status,
+                            c.EmployeeName
+                        } into g
+                        select new ItemStocks
+                        {
+                            ItemCode = g.Key.ItemCode,
+                            ItemName = g.Key.ItemName,
+                            Unit = g.Key.Unit,
+                            SafeQty = g.Key.SafeQty,
+                            TotalQty = g.Key.TotalQty,
+                            Status = g.Key.Status,
+                            EmployeeName = g.Key.EmployeeName
+                        };
 
             if (!string.IsNullOrEmpty(Status))
             {
@@ -141,7 +142,7 @@ namespace InventoryManagement.Controllers
                 query = query.Where(x => x.ItemCode == itemCode);
             }
 
-            ItemStocksViewModel.Products = await query.ToListAsync();
+            ItemStocksViewModel.Products = await query.OrderBy(a=>a.SafeQty).ToListAsync();
 
             foreach (var item in ItemStocksViewModel.Products)
             {
@@ -172,10 +173,12 @@ namespace InventoryManagement.Controllers
         // GET: ItemStocks/Edit/5
         public async Task<IActionResult> Edit(string itemCode, string itemName)
         {
+
             if (itemCode == null)
             {
                 return NotFound();
             }
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var ItemStocksEditViewModel = new ItemStocksEditViewModel();
 
             // 總庫存量不可改動
@@ -184,7 +187,7 @@ namespace InventoryManagement.Controllers
                                                 select new ItemStocksEdit
                                                 {
                                                     ItemCode = a.ItemCode,
-                                                    ItemName = itemName,
+                                                    ItemName = itemName.Trim(),
                                                     Unit = a.Unit,
                                                     SafeQty = a.SafeQty,
                                                     TotalQty = a.TotalQty,
@@ -204,7 +207,10 @@ namespace InventoryManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ItemStocksEdit Product)
         {
-            ModelState["Product.ItemName"].ValidationState = ModelValidationState.Valid; 
+            // 不需更動
+            ModelState["Product.ItemName"].ValidationState = ModelValidationState.Valid;
+            ModelState["Product.Status"].ValidationState = ModelValidationState.Valid;
+
             if (ModelState.IsValid)
             {
                 var update = _context.ItemStock.Find(Product.ItemCode); 
@@ -213,7 +219,6 @@ namespace InventoryManagement.Controllers
                 {
                     update.SafeQty = Product.SafeQty;
                     update.Unit = Product.Unit;
-                    update.Status = Product.Status;
                     update.SystemUser = _globalSettings.employeeId.Trim();
 
                     await _context.SaveChangesAsync();
@@ -226,8 +231,9 @@ namespace InventoryManagement.Controllers
         }
 
         //商品出入庫紀錄查詢
-        public async Task<IActionResult> SearchItemTrans(string type , DateTime startDate, DateTime endDate,int page = 1, int pageSize = 10)
+        public async Task<IActionResult> SearchItemTrans(string type , DateTime startDate, DateTime endDate,string itemCode, int page = 1, int pageSize = 10)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var result = from a in _context.ItemTrans
                          join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
                          join c in _context.User on a.SystemUser equals c.EmployeeId
@@ -257,6 +263,11 @@ namespace InventoryManagement.Controllers
                 result = result.Where(x => x.Type == type);
             }
 
+            if (!string.IsNullOrEmpty(itemCode))
+            {
+                result = result.Where(x => x.ItemCode == itemCode);
+            }
+
             if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
             {
                 result = result.Where(x => x.SystemTime >= startDate.Date && x.SystemTime <= endDate.Date.AddDays(1));
@@ -265,7 +276,7 @@ namespace InventoryManagement.Controllers
             }
 
             var ItemTransViewModel = new ItemTransViewModel();
-            ItemTransViewModel.Trans = await result.ToListAsync();
+            ItemTransViewModel.Trans = await result.OrderByDescending(a=>a.SystemTime).ToListAsync();
 
             foreach (var item in ItemTransViewModel.Trans)
             {
@@ -294,6 +305,7 @@ namespace InventoryManagement.Controllers
         // 需購買之商品_列出低於安全庫存量且狀態為啟用
         public async Task<IActionResult> NeedBuy(int page = 1, int pageSize = 10)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var query = from a in _context.ItemBasic
                         join b in _context.ItemStock on a.ItemCode equals b.ItemCode
                         where b.Status == "10"
@@ -318,6 +330,7 @@ namespace InventoryManagement.Controllers
         // 列出所有盤點商品 (狀態為啟用才盤點)
         public async Task<IActionResult> Inventory(string itemCode , int page = 1, int pageSize = 10)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var ItemStocksViewModel = new ItemStocksViewModel();
             var query = from a in _context.ItemStock
                         join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
@@ -376,7 +389,7 @@ namespace InventoryManagement.Controllers
                     _context.Add(insert);
                     _context.SaveChangesAsync();
 
-                   return Ok("存檔成功");
+                    //return RedirectToAction("Inventory", "ItemStocks");
                 }          
             }
 
@@ -384,8 +397,9 @@ namespace InventoryManagement.Controllers
         }
 
         // 查詢盤點紀錄
-        public async Task<IActionResult> SearchInventory(string type, DateTime startDate, DateTime endDate, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> SearchInventory(string type,string itemCode,DateTime startDate, DateTime endDate, int page = 1, int pageSize = 10)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var result = from a in _context.ItemTrans2
                          join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
                          join c in _context.User on a.SystemUser equals c.EmployeeId
@@ -417,6 +431,11 @@ namespace InventoryManagement.Controllers
                 result = result.Where(x => x.Type == type);
             }
 
+            if (!string.IsNullOrEmpty(itemCode))
+            {
+                result = result.Where(x => x.ItemCode == itemCode);
+            }
+
             if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
             {
                 result = result.Where(x => x.SystemTime >= startDate.Date && x.SystemTime <= endDate.Date.AddDays(1));
@@ -425,7 +444,7 @@ namespace InventoryManagement.Controllers
             }
 
             var ItemTransViewModel = new ItemTransViewModel();
-            ItemTransViewModel.Trans = await result.ToListAsync();
+            ItemTransViewModel.Trans = await result.OrderByDescending(a=>a.SystemTime).ToListAsync();
 
             foreach (var item in ItemTransViewModel.Trans)
             {

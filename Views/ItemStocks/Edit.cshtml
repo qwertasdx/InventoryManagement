@@ -43,7 +43,7 @@
             <div class="form-group">
                 <label asp-for="Product.TotalQty" class="control-label">總庫存量(不可修改)</label>
                 <input asp-for="Product.TotalQty" class="form-control"  disabled/>
-                <span asp-validation-for="Product.TotalQty" class="text-danger"></span>
+           
             </div><br>
             <div class="form-group">
                 <label asp-for="Product.Status" class="control-label">狀態</label>
@@ -59,8 +59,7 @@
                             <option value="@temp.Value">@temp.Text</option>
                         }                       
                     }
-                </select>
-                <span asp-validation-for="Product.Status" class="text-danger"></span>
+                </select>          
             </div><br>
 
             <div class="form-group">

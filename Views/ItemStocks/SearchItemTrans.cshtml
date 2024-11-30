@@ -25,7 +25,6 @@
         padding: 10px 0; /* 調整上下內邊距 */
         z-index: 1000; /* 確保在最上層 */
     }
-
 </style>
 
 <h1>商品出入庫查詢</h1><hr/>
@@ -46,6 +45,10 @@
             }
         }
     </select>
+
+    <label>商品貨號:</label>
+    <input type="text" name="itemCode"  />
+
     <label>
         開始時間
         @{
@@ -57,9 +60,9 @@
             {
                 <input type="date" name="startDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
             }
-        }
-        
+        }     
     </label>
+
     <label>
         結束時間
         @{
@@ -72,7 +75,6 @@
                 <input type="date" name="endDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
             }
         }
-        
     </label>
 
     <button type="submit">搜尋</button>
@@ -141,14 +143,14 @@
         @if (Model.CurrentPage > 1)
         {
             <li class="page-item">
-                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage - 1)&Type=@Context.Request.Query["Type"]&Spec=@Context.Request.Query["itemCode"]">上一頁</a>
+                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage - 1)&ItemCode=@Context.Request.Query["itemCode"]">上一頁</a>
             </li>
         }
 
         @for (int i = 1; i <= Model.TotalPages; i++)
         {
             <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@i&Status=@Context.Request.Query["Status"]&Spec=@Context.Request.Query["itemCode"]">@i </a>
+                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@i&ItemCode=@Context.Request.Query["itemCode"]">@i </a>
 
             </li>
         }
@@ -156,7 +158,7 @@
         @if (Model.CurrentPage < Model.TotalPages)
         {
             <li class="page-item">
-                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage + 1)&Status=@Context.Request.Query["Status"]&Spec=@Context.Request.Query["itemCode"]">下一頁</a>
+                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage + 1)&ItemCode=@Context.Request.Query["itemCode"]">下一頁</a>
             </li>
 
         }
