@@ -1,13 +1,37 @@
 ﻿@model IEnumerable<InventoryManagement.Dto.Users>
 @{
     Layout = "_Layout";
+    ViewData["Title"] = "管理使用者";
 }
 
 <style>
     .modal-dialog{
         pointer-events:auto
     }
+
+    /* 每隔一行底色用淡藍色 */
+    .table tbody tr:nth-child(even) {
+        background-color: #e7f3fe; /* 淡藍色 */
+    }
+
+    .fixed-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: white; /* 可根據需要調整背景色 */
+        padding: 10px 0; /* 調整上下內邊距 */
+        z-index: 1000; /* 確保在最上層 */
 </style>
+
+<h1>使用者基本資料</h1>
+<hr />
+<form action="/Admin/UserInfos" method="get">
+    <label>員工編號:</label>
+    <input type="text" name="employeeId" />
+
+    <button type="submit">搜尋</button>
+</form><br>
 <table class="table">
     <thead>
         <tr>
@@ -49,7 +73,7 @@
                     </form>
                     <form action="/Admin/Delete" method="post" style="display:inline;">
                        <input type="hidden" name="employeeId" value="@item.EmployeeId" />
-                       <button type="submit" class="btn btn-danger" onclick="return confirm('您確定要刪除這個項目嗎？');">刪除</button>
+                       <button type="submit" class="btn btn-danger" onclick="return confirm('您確定要刪除 @item.EmployeeId 此員工嗎？');">刪除</button>
                     </form>                               
                 </td>
             </tr>      

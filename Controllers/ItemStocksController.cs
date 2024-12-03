@@ -9,10 +9,13 @@ using InventoryManagement.Dto;
 using InventoryManagement.ViewModel;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Drawing;
-
+using Microsoft.AspNetCore.Authorization;
+using ClosedXML.Excel;
+using System.IO;
 
 namespace InventoryManagement.Controllers
 {
+    [Authorize]
     public class ItemStocksController : Controller
     {
         private readonly WebContext _context;
@@ -47,15 +50,14 @@ namespace InventoryManagement.Controllers
                              Status = b.Status,
                              EmployeeId = b.SystemUser                            
                          };
-            }
 
-            if (!string.IsNullOrEmpty(itemCode))  
-            {
-                query = query.Where(x => x.ItemCode == itemCode);
-                var result = query.FirstOrDefault();
+                var result = await query.SingleOrDefaultAsync();
 
-                StatusName(result);
-                return View(result);
+                if (result != null)
+                {            
+                    StatusName(result);
+                    return View(result);
+                }  
             }
 
             return View(query.FirstOrDefault());
@@ -325,6 +327,65 @@ namespace InventoryManagement.Controllers
             Pagination(page, pageSize, ItemStocksViewModel);
 
             return View(ItemStocksViewModel);
+        }
+
+        // 需購買之商品_匯出Excel資料
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var query = from a in _context.ItemBasic
+                        join b in _context.ItemStock on a.ItemCode equals b.ItemCode
+                        where b.Status == "10"
+                        where b.TotalQty < b.SafeQty
+                        select new
+                        {
+                            b.ItemCode,
+                            a.ItemName,
+                            b.Unit,
+                            b.SafeQty,
+                            b.TotalQty
+                        };
+
+            var items = await query.ToListAsync();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("需購買商品");
+
+                // 設置標題列
+                worksheet.Cell(1, 1).Value = "商品貨號";
+                worksheet.Cell(1, 2).Value = "商品名稱";
+                worksheet.Cell(1, 3).Value = "單位";
+                worksheet.Cell(1, 4).Value = "安全庫存量";
+                worksheet.Cell(1, 5).Value = "總庫存量";
+
+                // 寫入數據
+                int row = 2; // 從第二行開始寫數據
+                foreach (var item in items)
+                {
+                    worksheet.Cell(row, 1).Value = item.ItemCode;
+                    worksheet.Cell(row, 2).Value = item.ItemName;
+                    worksheet.Cell(row, 3).Value = item.Unit;
+                    worksheet.Cell(row, 4).Value = item.SafeQty;
+                    worksheet.Cell(row, 5).Value = item.TotalQty;
+                    row++;
+                }
+
+                // 自動調整列寬
+                worksheet.Columns().AdjustToContents();
+
+                // 生成 Excel 檔案流
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    stream.Position = 0;
+
+                    // 複製 Stream 資料
+                    var outputStream = new MemoryStream(stream.ToArray());
+                    string day = DateTime.Now.ToString("yyyy-MM-dd");
+                    string excelName = day + "需購買商品.xlsx";
+                    return File(outputStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
+                }
+            }
         }
 
         // 列出所有盤點商品 (狀態為啟用才盤點)

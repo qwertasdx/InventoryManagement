@@ -7,29 +7,38 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
-
-
 namespace InventoryManagement.Controllers
 {
     [Authorize(Roles = "admin")]  // 加上此段，代表只有驗證為管理人員才可使用
     public class AdminController : Controller
     {
         private readonly WebContext _context;
-        public AdminController(WebContext context)
+        private readonly GlobalSettings _globalSettings;
+        public AdminController(WebContext context, GlobalSettings globalSettings)
         {
             _context = context;
+            _globalSettings = globalSettings;
         }
 
-        public async Task<IActionResult> UserInfos()
+        // 顯示員工帳號與身分
+        public async Task<IActionResult> UserInfos(string employeeId)
         {
-            var result = await (from a in _context.User
-                                select new Users
-                                {
-                                    EmployeeId = a.EmployeeId,
-                                    EmployeeName = a.EmployeeName,
-                                    Account = a.Account,
-                                    Role = a.Role
-                                }).ToListAsync();
+            TempData["EmployeeName"] = _globalSettings.employeeName;
+            var query = from a in _context.User
+                         select new Users
+                         {
+                             EmployeeId = a.EmployeeId,
+                             EmployeeName = a.EmployeeName,
+                             Account = a.Account,
+                             Role = a.Role
+                         };
+            
+            if (!string.IsNullOrEmpty(employeeId))
+            {
+                query = query.Where(x=>x.EmployeeId == employeeId);
+            }
+
+            var result = await query.ToListAsync();
 
             foreach (var item in result)
             {
@@ -48,6 +57,7 @@ namespace InventoryManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(string employeeId)
         {
+            TempData["EmployeeName"] = _globalSettings.employeeName;
             var UsersViewModel = new UsersViewModel();
 
             UsersViewModel.Users = await(from a in _context.User
@@ -90,9 +100,9 @@ namespace InventoryManagement.Controllers
             if (user != null)
             {
                 _context.User.Remove(user);
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
+   
             return RedirectToAction(nameof(UserInfos));
         }
     }

@@ -151,14 +151,14 @@
         @if (Model.CurrentPage > 1)
         {
             <li class="page-item">
-                <a class="page-link" href="/ItemStocks/SearchInventory?page=@(Model.CurrentPage - 1)&ItemCode=@Context.Request.Query["itemCode"]">上一頁</a>
+                <a class="page-link" href="/ItemStocks/SearchInventory?page=@(Model.CurrentPage - 1)&ItemCode=@Context.Request.Query["itemCode"]&startDate=@ViewBag.startDate&endDate = @ViewBag.endDate">上一頁</a>
             </li>
         }
 
         @for (int i = 1; i <= Model.TotalPages; i++)
         {
             <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" href="/ItemStocks/SearchInventory?page=@i&ItemCode=@Context.Request.Query["itemCode"]">@i </a>
+                <a class="page-link" href="/ItemStocks/SearchInventory?page=@i&ItemCode=@Context.Request.Query["itemCode"]&startDate=@ViewBag.startDate&endDate = @ViewBag.endDate">@i </a>
 
             </li>
         }
@@ -166,7 +166,7 @@
         @if (Model.CurrentPage < Model.TotalPages)
         {
             <li class="page-item">
-                <a class="page-link" href="/ItemStocks/SearchInventory?page=@(Model.CurrentPage + 1)&ItemCode=@Context.Request.Query["itemCode"]">下一頁</a>
+                <a class="page-link" href="/ItemStocks/SearchInventory?page=@(Model.CurrentPage + 1)&ItemCode=@Context.Request.Query["itemCode"]&startDate=@ViewBag.startDate&endDate = @ViewBag.endDate">下一頁</a>
             </li>
         }
     </ul>

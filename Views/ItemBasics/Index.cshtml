@@ -117,7 +117,7 @@
                 </form>
                 <form action="/ItemBasics/Delete" method="post" style="display:inline;">
                     <input type="hidden" name="id" value="@item.ItemCode" />
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('您確定要刪除這個項目嗎？');">刪除</button>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm(`您確定要刪除 @item.ItemName`);">刪除</button>
                 </form>
                        
             </td>      

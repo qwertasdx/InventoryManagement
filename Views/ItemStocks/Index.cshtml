@@ -27,6 +27,7 @@
         <input type="text" name="itemCode" placeholder="商品貨號" />
         <button type="submit">查詢</button>
     </form>
+
     <br>
   
     @if (Model != null)
@@ -77,10 +78,16 @@
             </div>
         <div class="form-group">
             <label for="qty">數量:</label>
-            <input type="text" class="form-control" name="qty"  required>
+            <input type="number" class="form-control" name="qty" min="1" required placeholder="輸入數量">
         </div><br>
            
         <button type="submit" class="btn btn-primary">存檔</button>
         </form>
+    }
+    else
+    {
+      
+        <p class="text-warning">未找到相關資料，請檢查輸入的商品貨號。</p>
+        
     }
 </body>
