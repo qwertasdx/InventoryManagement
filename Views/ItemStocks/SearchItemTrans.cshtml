@@ -54,7 +54,7 @@
         @{
             if (@ViewBag.startDate != null)
             {
-                <input type="date" name="startDate" value=@ViewBag.startDate />
+                <input type="date" name="startDate" value= "@ViewBag.startDate" />
             }
             else
             {
@@ -68,7 +68,7 @@
         @{
             if (@ViewBag.endDate != null)
             {
-                <input type="date" name="endDate" value=@ViewBag.endDate />
+                <input type="date" name="endDate" value= "@ViewBag.endDate" />
             }
             else
             {
@@ -81,61 +81,71 @@
 </form>
 <br>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayName("新增時間")
-            </th>
-            <th>
-                @Html.DisplayName("商品貨號")
-            </th>
-            <th>
-                @Html.DisplayName("商品名稱")
-            </th>
-            <th>
-                @Html.DisplayName("單位")
-            </th>
-            <th>
-                @Html.DisplayName("數量")
-            </th>         
-            <th>
-                @Html.DisplayName("異動人員")
-            </th>
-            <th>
-                @Html.DisplayName("入貨/出貨")
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Trans) {
-        <tr>
-            <td>
-                @item.SystemTime.ToString("yyyy-MM-dd")
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ItemCode)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ItemName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Unit)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TransQty)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EmployeeName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TypeName)
-            </td>          
-        </tr>
+<!-- 顯示通用錯誤消息 -->
+@if (!ViewData.ModelState.IsValid)
+{
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 }
-    </tbody>
-</table>
+ @if (Model.Trans != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayName("新增時間")
+                </th>
+                <th>
+                    @Html.DisplayName("商品貨號")
+                </th>
+                <th>
+                    @Html.DisplayName("商品名稱")
+                </th>
+                <th>
+                    @Html.DisplayName("單位")
+                </th>
+                <th>
+                    @Html.DisplayName("數量")
+                </th>
+                <th>
+                    @Html.DisplayName("異動人員")
+                </th>
+                <th>
+                    @Html.DisplayName("入貨/出貨")
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Trans)
+            {
+                <tr>
+                    <td>
+                        @item.SystemTime.ToString("yyyy-MM-dd")
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ItemCode)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ItemName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Unit)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TransQty)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.EmployeeName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TypeName)
+                    </td>
+                </tr>
+            }  
+        </tbody>  
+    </table>
+}
+
 
 <!-- 分頁按鈕 -->
 <nav aria-label="Page navigation" class="fixed-bottom">
@@ -143,24 +153,22 @@
         @if (Model.CurrentPage > 1)
         {
             <li class="page-item">
-                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage - 1)&ItemCode=@Context.Request.Query["itemCode"]">上一頁</a>
+                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage - 1)&type=@ViewBag.selectType&itemCode=@Context.Request.Query["itemCode"]&startDate=@ViewBag.startDate&endDate=@ViewBag.endDate">上一頁</a>
             </li>
         }
 
         @for (int i = 1; i <= Model.TotalPages; i++)
         {
             <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@i&ItemCode=@Context.Request.Query["itemCode"]">@i </a>
-
+                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@i&type=@ViewBag.selectType&itemCode=@Context.Request.Query["itemCode"]&startDate=@ViewBag.startDate&endDate=@ViewBag.endDate">@i</a>
             </li>
         }
 
         @if (Model.CurrentPage < Model.TotalPages)
         {
             <li class="page-item">
-                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage + 1)&ItemCode=@Context.Request.Query["itemCode"]">下一頁</a>
+                <a class="page-link" href="/ItemStocks/SearchItemTrans?page=@(Model.CurrentPage + 1)&type=@ViewBag.selectType&itemCode=@Context.Request.Query["itemCode"]&startDate=@ViewBag.startDate&endDate=@ViewBag.endDate">下一頁</a>
             </li>
-
         }
     </ul>
 </nav>

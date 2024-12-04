@@ -236,58 +236,69 @@ namespace InventoryManagement.Controllers
         public async Task<IActionResult> SearchItemTrans(string type , DateTime startDate, DateTime endDate,string itemCode, int page = 1, int pageSize = 10)
         {
             TempData["EmployeeName"] = _globalSettings.employeeName;
-            var result = from a in _context.ItemTrans
-                         join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
-                         join c in _context.User on a.SystemUser equals c.EmployeeId
-                         group new { a, b, c } by new
-                         {
-                             ItemCode = a.ItemCode,
-                             ItemName = b.ItemName,
-                             Unit = a.Unit,
-                             TransQty = a.TransQty,
-                             EmployeeName = c.EmployeeName,
-                             SystemTime = a.SystemTime,
-                             Type = a.Type
-                         } into g
-                         select new Dto.ItemTrans
-                         {
-                             ItemCode = g.Key.ItemCode,
-                             ItemName = g.Key.ItemName,
-                             Unit = g.Key.Unit,
-                             TransQty = g.Key.TransQty,
-                             EmployeeName = g.Key.EmployeeName,
-                             SystemTime = g.Key.SystemTime,
-                             Type = g.Key.Type
-                         };
 
-            if (!string.IsNullOrEmpty(type))
+            if (startDate > endDate)
             {
-                result = result.Where(x => x.Type == type);
-            }
-
-            if (!string.IsNullOrEmpty(itemCode))
-            {
-                result = result.Where(x => x.ItemCode == itemCode);
+                ModelState.AddModelError(string.Empty, "開始日期不能晚於結束日期");
+                return View(new ItemTransViewModel());
             }
 
             if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
             {
+                var result = from a in _context.ItemTrans
+                             join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
+                             join c in _context.User on a.SystemUser equals c.EmployeeId
+                             group new { a, b, c } by new
+                             {
+                                 ItemCode = a.ItemCode,
+                                 ItemName = b.ItemName,
+                                 Unit = a.Unit,
+                                 TransQty = a.TransQty,
+                                 EmployeeName = c.EmployeeName,
+                                 SystemTime = a.SystemTime,
+                                 Type = a.Type
+                             } into g
+                             select new Dto.ItemTrans
+                             {
+                                 ItemCode = g.Key.ItemCode,
+                                 ItemName = g.Key.ItemName,
+                                 Unit = g.Key.Unit,
+                                 TransQty = g.Key.TransQty,
+                                 EmployeeName = g.Key.EmployeeName,
+                                 SystemTime = g.Key.SystemTime,
+                                 Type = g.Key.Type
+                             };
+
+                if (!string.IsNullOrEmpty(type))
+                {
+                    result = result.Where(x => x.Type == type);
+                }
+
+                if (!string.IsNullOrEmpty(itemCode))
+                {
+                    result = result.Where(x => x.ItemCode == itemCode);
+                }
+              
+                // 時間過濾
                 result = result.Where(x => x.SystemTime >= startDate.Date && x.SystemTime <= endDate.Date.AddDays(1));
+                
+                var ItemTransViewModel = new ItemTransViewModel();
+                ItemTransViewModel.Trans = await result.OrderByDescending(a => a.SystemTime).ToListAsync();
+
+                foreach (var item in ItemTransViewModel.Trans)
+                {
+                    typeName(item);
+                }
+
+                Pagination2(page, pageSize, ItemTransViewModel);
+
+                @ViewBag.selectType = type;
                 @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
                 @ViewBag.endDate = endDate.ToString("yyyy-MM-dd");
+
+                return View(ItemTransViewModel);
             }
-
-            var ItemTransViewModel = new ItemTransViewModel();
-            ItemTransViewModel.Trans = await result.OrderByDescending(a=>a.SystemTime).ToListAsync();
-
-            foreach (var item in ItemTransViewModel.Trans)
-            {
-                typeName(item);
-            }
-            @ViewBag.selectType = type;
-            Pagination2(page, pageSize, ItemTransViewModel);
-
-            return View(ItemTransViewModel);
+            return View(new ItemTransViewModel());
         }
 
         //設定分頁，10筆資料為一頁
@@ -461,61 +472,70 @@ namespace InventoryManagement.Controllers
         public async Task<IActionResult> SearchInventory(string type,string itemCode,DateTime startDate, DateTime endDate, int page = 1, int pageSize = 10)
         {
             TempData["EmployeeName"] = _globalSettings.employeeName;
-            var result = from a in _context.ItemTrans2
-                         join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
-                         join c in _context.User on a.SystemUser equals c.EmployeeId
-                         group new { a, b, c } by new
-                         {
-                             ItemCode = a.ItemCode,
-                             ItemName = b.ItemName,
-                             Unit = a.Unit,
-                             TransQty = a.TransQty,
-                             EmployeeName = c.EmployeeName,
-                             SystemTime = a.SystemTime,
-                             Type = a.Type,
-                             Reason = a.Reason
-                         } into g
-                         select new Dto.ItemTrans
-                         {
-                             ItemCode = g.Key.ItemCode,
-                             ItemName = g.Key.ItemName,
-                             Unit = g.Key.Unit,
-                             TransQty = g.Key.TransQty,
-                             EmployeeName = g.Key.EmployeeName,
-                             SystemTime = g.Key.SystemTime,
-                             Type = g.Key.Type,
-                             Reason = g.Key.Reason
-                         };
 
-            if (!string.IsNullOrEmpty(type))
+            if (startDate > endDate)
             {
-                result = result.Where(x => x.Type == type);
-            }
-
-            if (!string.IsNullOrEmpty(itemCode))
-            {
-                result = result.Where(x => x.ItemCode == itemCode);
+                ModelState.AddModelError(string.Empty, "開始日期不能晚於結束日期");
+                return View(new ItemTransViewModel());
             }
 
             if (startDate != DateTime.MinValue && endDate != DateTime.MinValue)
             {
+                var result = from a in _context.ItemTrans2
+                             join b in _context.ItemBasic on a.ItemCode equals b.ItemCode
+                             join c in _context.User on a.SystemUser equals c.EmployeeId
+                             group new { a, b, c } by new
+                             {
+                                 ItemCode = a.ItemCode,
+                                 ItemName = b.ItemName,
+                                 Unit = a.Unit,
+                                 TransQty = a.TransQty,
+                                 EmployeeName = c.EmployeeName,
+                                 SystemTime = a.SystemTime,
+                                 Type = a.Type,
+                                 Reason = a.Reason
+                             } into g
+                             select new Dto.ItemTrans
+                             {
+                                 ItemCode = g.Key.ItemCode,
+                                 ItemName = g.Key.ItemName,
+                                 Unit = g.Key.Unit,
+                                 TransQty = g.Key.TransQty,
+                                 EmployeeName = g.Key.EmployeeName,
+                                 SystemTime = g.Key.SystemTime,
+                                 Type = g.Key.Type,
+                                 Reason = g.Key.Reason
+                             };
+
+                if (!string.IsNullOrEmpty(type))
+                {
+                    result = result.Where(x => x.Type == type);
+                }
+
+                if (!string.IsNullOrEmpty(itemCode))
+                {
+                    result = result.Where(x => x.ItemCode == itemCode);
+                }
+           
                 result = result.Where(x => x.SystemTime >= startDate.Date && x.SystemTime <= endDate.Date.AddDays(1));
+                   
+                var ItemTransViewModel = new ItemTransViewModel();
+                ItemTransViewModel.Trans = await result.OrderByDescending(a => a.SystemTime).ToListAsync();
+
+                foreach (var item in ItemTransViewModel.Trans)
+                {
+                    inventoryTypeName(item);
+                }
+
+                @ViewBag.selectType = type;
                 @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
                 @ViewBag.endDate = endDate.ToString("yyyy-MM-dd");
+
+                Pagination2(page, pageSize, ItemTransViewModel);
+
+                return View(ItemTransViewModel);
             }
-
-            var ItemTransViewModel = new ItemTransViewModel();
-            ItemTransViewModel.Trans = await result.OrderByDescending(a=>a.SystemTime).ToListAsync();
-
-            foreach (var item in ItemTransViewModel.Trans)
-            {
-                inventoryTypeName(item);
-            }
-
-            @ViewBag.selectType = type;
-            Pagination2(page, pageSize, ItemTransViewModel);
-
-            return View(ItemTransViewModel);
+            return View(new ItemTransViewModel());
         }
 
 
