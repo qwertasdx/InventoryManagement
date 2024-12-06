@@ -25,6 +25,10 @@
         padding: 10px 0; /* 調整上下內邊距 */
         z-index: 1000; /* 確保在最上層 */
     }
+
+    .front-red {
+        color: red !important;
+    }
 </style>
 
 <h1>盤點紀錄查詢</h1><hr />
@@ -142,9 +146,15 @@
                     <td>
                         @Html.DisplayFor(modelItem => item.EmployeeName)
                     </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.TypeName)
-                    </td>
+                    @if (item.TypeName == "盤虧")
+                    {
+                        <td class="front-red">@Html.DisplayFor(modelItem => item.TypeName)</td>
+                    }
+                    else
+                    {
+                        <td>@Html.DisplayFor(modelItem => item.TypeName)</td>
+                    }
+                    
                     <td>
                         @Html.DisplayFor(modelItem => item.Reason)
                     </td>

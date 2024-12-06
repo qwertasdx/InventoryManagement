@@ -32,28 +32,28 @@
   
     @if (Model != null)
     {
-        <div class="form-group">
-            <label for="itemCode">商品貨號:</label>
+        <div class="form-group">           
+            @Html.DisplayNameFor(model=>model.ItemCode):
             <input type="text" class="form-control" id="itemCode" value="@Model.ItemCode" readonly>
         </div>
         <br>
         <div class="form-group">
-            <label for="itemName">商品名稱:</label>
+            @Html.DisplayNameFor(model => model.ItemName):
             <input type="text" class="form-control" id="itemName" value="@Model.ItemName" readonly>
         </div>
         <br>
         <div class="form-group">
-            <label for="unit">單位:</label>
+            @Html.DisplayNameFor(model => model.Unit):
             <input type="text" class="form-control" id="unit" value="@Model.Unit" readonly>
         </div>
         <br>
         <div class="form-group">
-            <label for="totalQty">總數量:</label>
+            @Html.DisplayNameFor(model => model.TotalQty):
             <input type="text" class="form-control" id="totalQty" value="@Model.TotalQty" readonly>
         </div>
         <br>
         <div class="form-group">
-            <label for="status">狀態:</label>
+            @Html.DisplayNameFor(model => model.StatusName):
             <input type="text" class="form-control" id="status" value="@Model.StatusName" readonly>
         </div>
         <br>
@@ -87,7 +87,7 @@
     else
     {
       
-        <p class="text-warning">未找到相關資料，請檢查輸入的商品貨號。</p>
+        <p class="text-danger">未找到相關資料，請檢查輸入的商品貨號。</p>
         
     }
 </body>

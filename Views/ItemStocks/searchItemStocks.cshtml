@@ -25,6 +25,9 @@
         z-index: 1000; /* 確保在最上層 */
     }
 
+    .front-red {
+        color:red !important;
+    }
 </style>
 <h1>查詢商品庫存量</h1>
 <hr/>
@@ -88,9 +91,15 @@
             <td>
                 @item.Unit
             </td>
-            <td>
-                @item.SafeQty
-            </td>
+
+            @if (item.SafeQty == 0)
+            {
+                <td class="front-red">@item.SafeQty</td>                    
+            }
+            else{
+                <td >@item.SafeQty</td>
+            }
+               
             <td>
                 @item.TotalQty
             </td>
