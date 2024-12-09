@@ -23,6 +23,8 @@
                 <span asp-validation-for="News.ItemName" class="text-danger"></span>
             </div><br>
             <div class="form-group">
+                <input type="hidden" asp-for="News.SpecName" />
+                <input type="hidden" asp-for="News.Spec" />
                 <label asp-for="News.SpecName" class="control-label">分類(不可修改)</label>
                 <input asp-for="News.SpecName" class="form-control" disabled>
                 <span asp-validation-for="News.Spec" class="text-danger"></span>
@@ -62,7 +64,7 @@
             </div><br>
             <input type="hidden" asp-for="News.Img" >
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="存檔" class="btn btn-primary" />
             </div>
         </form>
     </div>

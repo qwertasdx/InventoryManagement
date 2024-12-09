@@ -83,6 +83,7 @@ namespace InventoryManagement.Controllers
                     type = "out";
                 }
                 product.SystemUser = _globalSettings.employeeId;
+                product.SystemTime = DateTime.Now;
 
                 //新增出入庫紀錄
                 Models.ItemTrans insert = new Models.ItemTrans()

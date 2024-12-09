@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//¥[¤JLogging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 builder.Services.AddSingleton<GlobalSettings>();
 
 builder.Services.AddAutoMapper(typeof(Program));

@@ -11,6 +11,7 @@ using InventoryManagement.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using System.Drawing;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 
 namespace InventoryManagement.Controllers
@@ -28,15 +29,18 @@ namespace InventoryManagement.Controllers
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly GlobalSettings _globalSettings;
+        private readonly ILogger<ItemBasicsController> _logger;
         public string name = "";
         private object Img;
 
-        public ItemBasicsController(WebContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor, GlobalSettings globalSettings)
+        public ItemBasicsController(WebContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor, GlobalSettings globalSettings,
+                                    ILogger<ItemBasicsController> logger)
         {
             _context = context;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
             _globalSettings = globalSettings;
+            _logger = logger;
         }
 
         // 取得登入的使用者資訊
@@ -85,7 +89,7 @@ namespace InventoryManagement.Controllers
                                    TotalQty  = g.Key.TotalQty
                                };
 
-            if (Status == null)
+            if (string.IsNullOrEmpty(Status))
             {
                 query = query.Where(x => x.Status == "10");
             }
@@ -94,7 +98,6 @@ namespace InventoryManagement.Controllers
                 query = query.Where(x => x.Status == Status);
             }
   
-            // 根據 Spec 過濾
             if (!string.IsNullOrEmpty(Spec) && Spec != "0")
             {
                 query = query.Where(x => x.Spec == Spec);
@@ -132,8 +135,7 @@ namespace InventoryManagement.Controllers
             ItemBasicSearchViewModel.CurrentPage = page;
             ItemBasicSearchViewModel.TotalPages = totalPages;        
         }
-     
-        [HttpGet]
+
         public string GetImg(string id)
         {
             var result = (from a in _context.ItemBasic
@@ -190,12 +192,15 @@ namespace InventoryManagement.Controllers
                     _context.Add(insert);
                     _context.Add(insert2);
                     await _context.SaveChangesAsync();
-                    // 提交交易
+
+                    // 交易確認
                     transaction.Commit();
                 }
                 catch(Exception ex)
                 {
-                    await transaction.RollbackAsync();
+                    //交易回復
+                    transaction.RollbackAsync();
+                    _logger.LogWarning("LogWarning-ItemBasics/Create"+ ex.ToString());
                     ModelState.AddModelError("", "存檔失敗，請稍後再試。");
                     return View(ItemBasicCreateViewModel);
                 }
@@ -270,42 +275,64 @@ namespace InventoryManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ItemBasicsEdit news, IFormFile myimg)
         {
-            if (news.ItemCode == null)
+            var ItemBasicsEditViewModel = new ItemBasicsEditViewModel();
+            ItemBasicsEditViewModel.News = news;
+
+            if(myimg == null)
             {
-                return NotFound();
+                ItemBasicsEditViewModel.imageBase64 = GetImageBase64(ItemBasicsEditViewModel.News.Img);
             }
-          
-            var update = _context.ItemBasic.Find(news.ItemCode);
-            var update2 =_context.ItemStock.Find(news.ItemCode);
-
-            if (update != null && update2 != null)
-            {
-                update.ItemName = news.ItemName;
-                update.Status = news.Status;
-                update.SystemUser = _globalSettings.employeeId.Trim();
-
-                // 狀態修改，ItemStock也需更動
-                if (update2.Status != news.Status)
-                {
-                    update2.Status = news.Status;
-                    update2.SystemUser = _globalSettings.employeeId.Trim();
-                }
-                
-                using (var ms = new MemoryStream())
-                {
-                    //有更新圖片
-                    if (myimg != null)
-                    {
-                        myimg.CopyTo(ms);
-                        update.Img = ms.ToArray();
-                    }     
-                }
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
+   
             
-            return View(news);
+            if (string.IsNullOrEmpty(news.ItemCode))
+            {
+                ModelState.AddModelError("", "查無此商品，請稍後再試。");
+                return View(ItemBasicsEditViewModel);
+            }
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    var update = _context.ItemBasic.Find(news.ItemCode);
+                    var update2 = _context.ItemStock.Find(news.ItemCode);
+
+                    if (update != null && update2 != null)
+                    {
+                        update.ItemName = news.ItemName;
+                        update.Status = news.Status;
+                        update.SystemUser = _globalSettings.employeeId.Trim();
+
+                        // 狀態修改，ItemStock也需更動
+                        if (update2.Status != news.Status)
+                        {
+                            update2.Status = news.Status;
+                            update2.SystemUser = _globalSettings.employeeId.Trim();
+                        }
+
+                        using (var ms = new MemoryStream())
+                        {
+                            //有更新圖片
+                            if (myimg != null)
+                            {
+                                myimg.CopyTo(ms);
+                                update.Img = ms.ToArray();
+                            }
+                        }
+
+                        await _context.SaveChangesAsync();
+                        transaction.Commit();
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+                catch (Exception ex) {
+                    //交易回復                
+                    transaction.RollbackAsync();
+                    ModelState.AddModelError("", "存檔失敗，請稍後再試。");
+                    return View(ItemBasicsEditViewModel);
+                }
+            }
+            return View(ItemBasicsEditViewModel);
         }
 
         //將圖片轉換成Base64，在畫面顯示
@@ -323,26 +350,40 @@ namespace InventoryManagement.Controllers
             return Convert.ToBase64String(ms.ToArray());
         }
 
-     
+
         // POST: ItemBasics/Delete/5
-        [HttpPost]     
+        [HttpPost]
         public async Task<IActionResult> Delete(string id)
         {
-            if (id == null) { 
+            if (id == null)
+            {
                 return NotFound();
             }
 
-            var itemBasic = await _context.ItemBasic.FindAsync(id);
-            var itemStock = await _context.ItemStock.FindAsync(id);
-
-            if (itemBasic != null && itemStock != null)
+            using (var transaction = _context.Database.BeginTransaction())
             {
-                _context.ItemBasic.Remove(itemBasic);
-                _context.ItemStock.Remove(itemStock);
-            }
+                try
+                {
+                    var itemBasic = await _context.ItemBasic.FindAsync(id);
+                    var itemStock = await _context.ItemStock.FindAsync(id);
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+                    if (itemBasic != null && itemStock != null)
+                    {
+                        _context.ItemBasic.Remove(itemBasic);
+                        _context.ItemStock.Remove(itemStock);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    transaction.RollbackAsync();
+                    ModelState.AddModelError("", "刪除失敗，請稍後再試。");
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         private bool ItemBasicExists(string id)
