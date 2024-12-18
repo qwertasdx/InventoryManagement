@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace InventoryManagement.Models;
 
+//盤點
 public partial class ItemTrans2
 {
     public int TransNo { get; set; }

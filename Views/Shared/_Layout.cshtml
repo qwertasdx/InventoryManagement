@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/InventoryManagement.styles.css" asp-append-version="true" />
+
+ 
+    @await RenderSectionAsync("topCSS", required: false)
+    @await RenderSectionAsync("topJS", required: false)
 </head>
 <body>
     <header>
@@ -52,6 +56,16 @@
                                 <li><a class="dropdown-item" asp-area="" asp-controller="ItemStocks" asp-action="SearchInventory">查詢盤點紀錄</a></li>
                             </ul>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                商品報表
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" asp-area="" asp-controller="Chart" asp-action="Index">商品圖表</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-controller="Chart" asp-action="Product_Pie">商品類型分布圖表</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-controller="Chart" asp-action="InventoryLosses_Bar">盤虧數量前五名的商品</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item dropdown ">
                             <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 管理人員
@@ -79,6 +93,11 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
+    @await RenderSectionAsync("endCSS", required: false)
+    @await RenderSectionAsync("endJS", required: false)
+  
 </body>
 </html>

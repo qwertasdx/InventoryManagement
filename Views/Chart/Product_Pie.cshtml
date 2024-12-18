@@ -1,0 +1,84 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "商品類別分布圖表";
+}
+
+<head>
+    <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="h-100 p-3 bg-info rounded-3">
+            <h2>商品類別分布圖表</h2>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var specData = @Html.Raw(ViewBag.data);
+        var ctx = document.getElementById("myChart");
+
+        var myChart = new Chart(ctx, {
+            type: "pie",
+            data: {
+                labels: ["短袖", "長袖", "背心", "短褲", "長褲", "包包", "飾品"],
+                datasets: [{
+                    data: specData,
+                    backgroundColor: [
+                        "LightSkyBlue",
+                        "LightPink",
+                        "LightGray",
+                        "LightYellow",
+                        "Orange",
+                        "LightGreen",
+                        "Purple"
+                    ],
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '商品類別分佈數量',
+                        font: {
+                            size: 24,
+                            weight: 'bold'
+                        }
+                    },
+                    legend: {
+                        position: 'left'
+                    }
+                }
+            },
+            plugins: [{
+                // 自定義插件來繪製數據標籤
+                id: 'drawLabels',
+                afterDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    const dataset = chart.data.datasets[0];
+                    const meta = chart.getDatasetMeta(0);
+
+                    meta.data.forEach((element, index) => {
+                        const dataValue = dataset.data[index];
+                        const model = element.tooltipPosition();
+                        ctx.fillStyle = '#000';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(dataValue, model.x, model.y);
+                    });
+
+                    ctx.restore();
+                }
+            }]
+        });
+    </script>
+</body>
+
