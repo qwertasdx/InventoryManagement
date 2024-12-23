@@ -20,13 +20,11 @@ namespace InventoryManagement.Controllers
     {
         private readonly WebContext _context;
         private readonly GlobalSettings _globalSettings;
-        //private readonly ItemStocksController _itemStocksController;
 
-        public ItemStocksController(WebContext context, GlobalSettings globalSettings)//,ItemStocksController itemStocksController)
+        public ItemStocksController(WebContext context, GlobalSettings globalSettings)
         {
             _context = context;
             _globalSettings = globalSettings;
-            //_itemStocksController = itemStocksController;
         }
  
         // GET: ItemStocks 出入庫

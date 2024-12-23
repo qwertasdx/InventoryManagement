@@ -1,0 +1,107 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "商品每月出貨量";
+}
+
+<head>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="h-100 p-3 bg-info">
+            <h2>@ViewBag.thisYear 年 @ViewBag.itemName 1-12月份銷售量</h2>
+        </div><hr />
+        <div>
+            <label>商品:</label>
+            <select id="itemCode" name="itemCode" class="form-select1">
+                @foreach (var temp in ViewData["item"] as List<SelectListItem>)
+                {
+                    <option value="@temp.Value">@temp.Text</option>
+                }
+            </select>
+            <button type="submit" id="get">搜尋</button>
+        </div>
+        <div class="col-md-8 offset-md-2" id="chartContainer" style="display:@(string.IsNullOrEmpty(ViewBag.Message) ? "block" : "none")">
+            <canvas id="myChart"></canvas>
+        </div>
+        @if (!string.IsNullOrEmpty(ViewBag.Message))
+        {
+            <div class="alert alert-warning">@ViewBag.Message</div>
+        }
+    </div>
+    <script>
+        var baseApiUrl = "http://localhost:5144/ChartApi/GetSalesQty";
+        var chart = null;
+     
+        $().ready(function () {
+            // 當按下搜尋按鈕時
+            $("#get").click(function () {
+                var itemCode = $("#itemCode").val(); // 取得下拉選單的值
+
+                if (!itemCode) {
+                    alert("請選擇一個商品");
+                    return;
+                }
+
+                // 動態組合 API URL
+                var apiUrl = `${baseApiUrl}/${itemCode}`;
+
+                // 發送請求
+                $.get(apiUrl, function (response) {
+                    if (response && response.length > 0) {
+                        //console.log(response); // 查看回傳的資料
+                        drawLineChart(response); // 繪製圖表
+                        $("#chartContainer").show(); // 顯示圖表
+                    } else {
+                        alert("沒有資料可顯示！");
+                    }
+                }).fail(function () {
+                    alert("無法獲取資料，請檢查 API 是否正確！");
+                });
+            });
+
+            hideCanvas(); // 預設隱藏圖表
+        });
+
+        function drawLineChart(data) {
+            if (chart) {
+                chart.destroy(); // 若已有圖表，先清掉
+            }
+
+            var labels = data.map(item => item.month); // 取月份
+            var values = data.map(item => item.outQty); // 取銷售量
+
+            var ctx = document.getElementById("myChart").getContext("2d");
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "@ViewBag.itemName 出貨量",
+                        data: values,
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        backgroundColor: "rgba(75, 192, 192, 0.2)",
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true, // 從 0 開始
+                            ticks: {
+                                stepSize: 5 // 設置間隔為 5
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function hideCanvas() {
+            $("#chartContainer").hide(); // 隱藏圖表容器
+        }
+
+    </script>
+</body>

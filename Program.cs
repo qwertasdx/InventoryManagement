@@ -15,7 +15,7 @@ builder.Logging.AddConsole();
 builder.Services.AddSingleton<GlobalSettings>();
 
 builder.Services.AddAutoMapper(typeof(Program));
-// Add services to the container.
+
 builder.Services.AddControllersWithViews();
 
 // 取得登入使用者資訊
@@ -28,7 +28,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
     //沒有權限時，會自動導入此網址
     option.AccessDeniedPath = new PathString("/User/NoAccess");
-    //option.LoginPath = new PathString("/User/NoAccess");
 });
 
 //所有api都需驗證才可使用
@@ -40,8 +39,6 @@ builder.Services.AddMvc(options =>
 builder.Services.AddDbContext<WebContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("WebDatabase")));
 
-//加入ItemStocksController API
-//builder.Services.AddTransient<ItemStocksController>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -61,5 +58,4 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=User}/{action=Login}/{id?}");
-    //pattern: "{controller=ItemBasics}/{action=Index}/{id?}");
 app.Run();
