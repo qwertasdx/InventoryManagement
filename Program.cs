@@ -36,6 +36,7 @@ builder.Services.AddMvc(options =>
     options.Filters.Add(new AuthorizeFilter());
 });
 
+// 註冊EF Core
 builder.Services.AddDbContext<WebContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("WebDatabase")));
 
@@ -50,10 +51,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-//驗證機制，此三項順序不可顛倒
+//驗證機制，順序不可顛倒
 app.UseCookiePolicy();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseAuthentication(); //驗證
+app.UseAuthorization(); //授權
 
 app.MapControllerRoute(
     name: "default",
