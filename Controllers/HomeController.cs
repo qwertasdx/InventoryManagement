@@ -14,7 +14,8 @@ namespace InventoryManagement.Controllers
         {
             _logger = logger;
         }
-       
+
+        //±Ð¾Ç¤â¥U
         public IActionResult Index()
         {
             return View();

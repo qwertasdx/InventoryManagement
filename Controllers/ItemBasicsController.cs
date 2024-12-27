@@ -11,7 +11,6 @@ using InventoryManagement.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using System.Drawing;
-using DocumentFormat.OpenXml.Wordprocessing;
 
 
 namespace InventoryManagement.Controllers

@@ -8,10 +8,8 @@ using InventoryManagement.Models;
 using InventoryManagement.Dto;
 using InventoryManagement.ViewModel;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Drawing;
 using Microsoft.AspNetCore.Authorization;
 using ClosedXML.Excel;
-using System.IO;
 
 namespace InventoryManagement.Controllers
 {
@@ -26,8 +24,8 @@ namespace InventoryManagement.Controllers
             _context = context;
             _globalSettings = globalSettings;
         }
- 
-        // GET: ItemStocks 出入庫
+
+        // GET: ItemStocks 商品進出貨
         public async Task<IActionResult> Index(string itemCode)
         {
             // 初始化結果為空集合
@@ -150,27 +148,12 @@ namespace InventoryManagement.Controllers
                 StatusName(item);
             }
 
-            Pagination(page, pageSize, ItemStocksViewModel);
+            Pagination<ItemStocks, ItemStocksViewModel>(page, pageSize, ItemStocksViewModel);
             ViewBag.selectStatus = Status;
 
             return View(ItemStocksViewModel);         
         }
-
-        //設定分頁，10筆資料為一頁
-        public void Pagination(int page, int pageSize, ItemStocksViewModel ItemStocksViewModel)
-        {
-            var items = ItemStocksViewModel.Products; // 獲取所有項目
-            var totalItems = items.Count();
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-
-            var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-            ItemStocksViewModel.Products = pagedItems;
-            ItemStocksViewModel.CurrentPage = page;
-            ItemStocksViewModel.TotalPages = totalPages;
-        }
-
-
+       
         // GET: ItemStocks/Edit/5
         public async Task<IActionResult> Edit(string itemCode, string itemName)
         {
@@ -289,7 +272,7 @@ namespace InventoryManagement.Controllers
                     typeName(item);
                 }
 
-                Pagination2(page, pageSize, ItemTransViewModel);
+                Pagination<Dto.ItemTrans, ItemTransViewModel>(page, pageSize, ItemTransViewModel);
 
                 @ViewBag.selectType = type;
                 @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
@@ -298,20 +281,6 @@ namespace InventoryManagement.Controllers
                 return View(ItemTransViewModel);
             }
             return View(new ItemTransViewModel());
-        }
-
-        //設定分頁，10筆資料為一頁
-        public void Pagination2(int page, int pageSize, ItemTransViewModel ItemTransViewModel)
-        {
-            var items = ItemTransViewModel.Trans; // 獲取所有項目
-            var totalItems = items.Count();
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-
-            var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-            ItemTransViewModel.Trans = pagedItems;
-            ItemTransViewModel.CurrentPage = page;
-            ItemTransViewModel.TotalPages = totalPages;
         }
 
         // 需購買之商品_列出低於安全庫存量且狀態為啟用
@@ -334,7 +303,7 @@ namespace InventoryManagement.Controllers
             var ItemStocksViewModel = new ItemStocksViewModel();
             ItemStocksViewModel.Products = await query.ToListAsync();
 
-            Pagination(page, pageSize, ItemStocksViewModel);
+            Pagination<ItemStocks, ItemStocksViewModel>(page, pageSize, ItemStocksViewModel);
 
             return View(ItemStocksViewModel);
         }
@@ -420,7 +389,8 @@ namespace InventoryManagement.Controllers
             }
 
             ItemStocksViewModel.Products = await query.ToListAsync();
-            Pagination(page, pageSize, ItemStocksViewModel);
+
+            Pagination<ItemStocks, ItemStocksViewModel>(page, pageSize, ItemStocksViewModel);
             return View(ItemStocksViewModel);
         }
 
@@ -436,12 +406,12 @@ namespace InventoryManagement.Controllers
                 {
                     update.TotalQty = inventoryUpdate.InventoryQty;
                     update.SystemUser = _globalSettings.employeeId;
-      
+
                     // 新增盤盈/盤虧紀錄
-                    Models.ItemTrans2 insert = new Models.ItemTrans2() 
+                    Models.ItemTrans2 insert = new Models.ItemTrans2()
                     {
                         ItemCode = update.ItemCode,
-                        Unit = update.Unit,        
+                        Unit = update.Unit,
                         TransQty = inventoryUpdate.DiffQty,
                         Reason = inventoryUpdate.Reason,
                         SystemUser = _globalSettings.employeeId
@@ -459,12 +429,10 @@ namespace InventoryManagement.Controllers
                     _context.Update(update);
                     _context.Add(insert);
                     _context.SaveChangesAsync();
-
-                    //return RedirectToAction("Inventory", "ItemStocks");
                 }          
             }
-
-            return BadRequest(new { success = false, message = "盤點失敗，請檢查輸入數據" });
+            return Ok();
+            //return BadRequest(new { success = false, message = "盤點失敗，請檢查輸入數據" });
         }
 
         // 查詢盤點紀錄
@@ -530,13 +498,27 @@ namespace InventoryManagement.Controllers
                 @ViewBag.startDate = startDate.ToString("yyyy-MM-dd");
                 @ViewBag.endDate = endDate.ToString("yyyy-MM-dd");
 
-                Pagination2(page, pageSize, ItemTransViewModel);
+                Pagination<Dto.ItemTrans, ItemTransViewModel>(page, pageSize, ItemTransViewModel);
 
                 return View(ItemTransViewModel);
             }
             return View(new ItemTransViewModel());
         }
 
+        //設定分頁，10筆資料為一頁
+        public void Pagination<T, TViewModel>(int page, int pageSize, TViewModel viewModel)
+        where TViewModel : IPaginatable<T>
+        {
+            var items = viewModel.Items; // 獲取所有項目
+            var totalItems = items.Count();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            viewModel.Items = pagedItems;
+            viewModel.CurrentPage = page;
+            viewModel.TotalPages = totalPages;
+        }
 
         // 對照狀態
         public void StatusName(ItemStocks item)

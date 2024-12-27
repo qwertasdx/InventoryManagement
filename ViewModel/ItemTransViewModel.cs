@@ -3,9 +3,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace InventoryManagement.ViewModel
 {
-    public class ItemTransViewModel
+    public class ItemTransViewModel : IPaginatable<ItemTrans>
     {
-        public List<ItemTrans> Trans { get; set; }
+        public List<ItemTrans> Trans { get; set; } = new List<ItemTrans>();
+
+        // 實作 IPaginatable<T>
+        public List<ItemTrans> Items
+        {
+            get => Trans;
+            set => Trans = value; // 將 Items 的變更回寫到 Trans
+        }
 
         public List<SelectListItem> TypeList { get; } = new List<SelectListItem>
         {
