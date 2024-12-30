@@ -110,7 +110,7 @@ namespace InventoryManagement.Controllers
             //組前端資料
             foreach (var item in ItemBasicSearchViewModel.News) 
             {
-                this.StatusName(item);
+                StatusName(item);
                 item.SpecName = SpecName(item.Spec);
             }
 
