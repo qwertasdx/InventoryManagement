@@ -94,6 +94,7 @@ namespace InventoryManagement.Controllers
 
         // 刪除員工帳密
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string employeeId)
         {
             var user =  await _context.User.FindAsync(employeeId.Trim());

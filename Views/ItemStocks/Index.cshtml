@@ -57,7 +57,8 @@
             <input type="text" class="form-control" id="status" value="@Model.StatusName" readonly>
         </div>
         <br>
-        <form action="/ItemStocks/saveQty" method="post">
+        <form action="/ItemStocks/Create" method="post">
+            @Html.AntiForgeryToken()
             <div class="radio-container">
                 <label class="radio-label">進貨/出貨選擇:</label><br>
 
@@ -76,12 +77,12 @@
                     </label>
                </div>
             </div>
-        <div class="form-group">
-            <label for="qty">數量:</label>
-            <input type="number" class="form-control" name="qty" min="1" required placeholder="輸入數量">
-        </div><br>
-           
-        <button type="submit" class="btn btn-primary">存檔</button>
+            <div class="form-group">
+                <label for="qty">數量:</label>
+                <input type="number" class="form-control" name="qty" min="1" required placeholder="輸入數量">
+            </div><br>
+               
+            <button type="submit" class="btn btn-primary">存檔</button>
         </form>
     }
     else

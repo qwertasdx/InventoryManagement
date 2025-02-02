@@ -32,6 +32,7 @@ namespace InventoryManagement.Controllers
 
   
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Login(LoginPost value)
         {
             if (ModelState.IsValid)
@@ -93,8 +94,9 @@ namespace InventoryManagement.Controllers
         {
             return View();
         }
-        
+
         // GET: Login/Create
+        [HttpGet]
         public IActionResult Create()
         {
             return View();
@@ -152,7 +154,7 @@ namespace InventoryManagement.Controllers
         }
 
         // POST: Login1/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // 防止跨網站偽造請求的攻擊
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -186,8 +188,7 @@ namespace InventoryManagement.Controllers
             return View(user);
         }
 
-        
-     
+            
         // GET: Login1/Delete/5
         public async Task<IActionResult> Delete(string id)
         {
