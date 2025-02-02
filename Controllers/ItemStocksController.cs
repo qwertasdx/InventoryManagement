@@ -60,7 +60,8 @@ namespace InventoryManagement.Controllers
         }
 
         //計算出入庫數量
-        [HttpPost]
+        [HttpPost, ActionName("Create")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> saveQty(string itemCode, int qty, string flexRadioDefault)
         {
             var product = _context.ItemStock.FirstOrDefault(p => p.ItemCode == itemCode);
@@ -396,6 +397,7 @@ namespace InventoryManagement.Controllers
 
         // 盤點
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public  IActionResult UpdateInventory([FromBody] InventoryUpdate inventoryUpdate)
         {
             if (inventoryUpdate != null)
